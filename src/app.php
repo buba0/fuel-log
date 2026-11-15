@@ -207,13 +207,12 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
     $liters = metric_field($units, 'volume', 'volume', 'fuel added', 0.00001, 99999, 5);
     $price = metric_field($units, 'price', 'price', 'price per unit', 0.0, 999999, 7);
     $odometer = metric_field($units, 'distance', 'odometer', 'odometer', 0.0, 999999999, 5);
-    $economy = metric_field($units, 'economy', 'economy', 'average fuel use', 0.000001, 99999, 6);
     $percent = round(number_input('tank_level', 'tank level before filling', 0, 100, 0), 2);
     $capacity = (float) ($record && $record['car_id'] == $car['id']
         ? $record['tank_capacity_liters'] : $car['tank_capacity_liters']);
     $paid = round($liters * $price, 2);
     $before = round($capacity * $percent / 100, 5);
-    $data = [$car['id'], $station['id'], $date, $liters, $price, $paid, $odometer, $economy, $percent, $capacity, $before];
+    $data = [$car['id'], $station['id'], $date, $liters, $price, $paid, $odometer, $percent, $capacity, $before];
     $pdo->beginTransaction();
     try {
         query($pdo, 'SELECT id FROM cars WHERE id = ? AND user_id = ? FOR UPDATE', [$car['id'], $userId]);
@@ -226,13 +225,14 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
         }
         if ($record) {
             query($pdo, 'UPDATE fillups SET car_id = ?, station_id = ?, filled_at = ?, liters = ?,
-                price_per_liter = ?, total_paid = ?, odometer_km = ?, consumption_l_100km = ?,
+                price_per_liter = ?, total_paid = ?, odometer_km = ?,
                 tank_before_percent = ?, tank_capacity_liters = ?, tank_before_liters = ? WHERE id = ? AND user_id = ?',
                 [...$data, $record['id'], $userId]);
         } else {
+            // Satisfy the original schema's required column. Reports derive economy from the fill-up history.
             query($pdo, 'INSERT INTO fillups (car_id, station_id, filled_at, liters, price_per_liter, total_paid,
                 odometer_km, consumption_l_100km, tank_before_percent, tank_capacity_liters, tank_before_liters, user_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [...$data, $userId]);
+                VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)', [...$data, $userId]);
         }
         $pdo->commit();
     } catch (Throwable $exception) {

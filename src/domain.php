@@ -84,7 +84,7 @@ function fuel_convert(float $value, string $dimension, string $unit, bool $toMet
 
 /**
  * Return statistics in canonical metric units. Dates are inclusive ISO calendar dates.
- * An interval's distance, duration and reported economy belong to its later fill-up.
+ * An interval's distance, duration and calculated economy belong to its later fill-up.
  */
 function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null): array
 {
@@ -101,9 +101,9 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
     $distanceKm = null;
     $intervalCount = 0;
     $totalDays = 0.0;
-    $recordedEconomies = [];
-    $weightedEconomySum = 0.0;
-    $economyWeightKm = 0.0;
+    $economies = [];
+    $fuelUsedLiters = 0.0;
+    $economyDistanceKm = 0.0;
 
     foreach ($rows as $row) {
         $date = substr($row['filled_at'], 0, 10);
@@ -118,14 +118,11 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
             continue;
         }
 
+        $row['calculated_consumption_l_100km'] = null;
         $inRange[] = $row;
         $liters = (float) $row['liters'];
         $totalLiters += $liters;
         $totalPaid += (float) ($row['total_paid'] ?? round($liters * (float) $row['price_per_liter'], 2));
-        $economy = (float) ($row['consumption_l_100km'] ?? 0);
-        if ($economy > 0) {
-            $recordedEconomies[] = $economy;
-        }
 
         if ($previous === null) {
             continue;
@@ -144,17 +141,22 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
         }
 
         $distanceKm = ($distanceKm ?? 0.0) + $span;
-        if ($economy > 0) {
-            $weightedEconomySum += $economy * $span;
-            $economyWeightKm += $span;
+        if ($span === 0.0 || !isset($previous['tank_before_liters'], $row['tank_before_liters'])) {
+            continue;
         }
-    }
 
-    $averageEconomy = null;
-    if ($economyWeightKm > 0) {
-        $averageEconomy = $weightedEconomySum / $economyWeightKm;
-    } elseif ($recordedEconomies !== []) {
-        $averageEconomy = array_sum($recordedEconomies) / count($recordedEconomies);
+        // Keep the stored volume precision so an exact zero stays zero after float arithmetic.
+        $fuelUsed = round((float) $previous['tank_before_liters'] + (float) $previous['liters']
+            - (float) $row['tank_before_liters'], 5);
+        if ($fuelUsed <= 0) {
+            continue;
+        }
+
+        $economy = 100 * $fuelUsed / $span;
+        $inRange[array_key_last($inRange)]['calculated_consumption_l_100km'] = $economy;
+        $economies[] = $economy;
+        $fuelUsedLiters += $fuelUsed;
+        $economyDistanceKm += $span;
     }
 
     return [
@@ -163,9 +165,9 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
         'total_paid' => round($totalPaid, 2),
         'distance_km' => $distanceKm,
         'avg_days' => $intervalCount > 0 ? $totalDays / $intervalCount : null,
-        'avg_consumption' => $averageEconomy,
-        'best_consumption' => $recordedEconomies !== [] ? min($recordedEconomies) : null,
-        'worst_consumption' => $recordedEconomies !== [] ? max($recordedEconomies) : null,
+        'avg_consumption' => $economyDistanceKm > 0 ? 100 * $fuelUsedLiters / $economyDistanceKm : null,
+        'best_consumption' => $economies !== [] ? min($economies) : null,
+        'worst_consumption' => $economies !== [] ? max($economies) : null,
         'avg_price_per_liter' => $totalLiters > 0 ? $totalPaid / $totalLiters : null,
         'cost_per_km' => $distanceKm > 0 ? $totalPaid / $distanceKm : null,
         'in_range' => $inRange,
