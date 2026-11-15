@@ -1,0 +1,4 @@
+.env
+config.php
+*.local.php
+.DS_Store
