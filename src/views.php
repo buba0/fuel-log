@@ -289,8 +289,7 @@ function fill_form(array|false $row, array $user, array $cars, array $stations):
             <?php field('odometer', 'Odometer (' . unit_symbol($units['distance']) . ')', posted('odometer', form_number($units, 'distance', $row, 'odometer_km')), $numeric + ['min' => '0']); ?>
             <?php field('volume', 'Fuel added (' . $volumeUnit . ')', posted('volume', form_number($units, 'volume', $row, 'liters')), $numeric + ['min' => '0.000001', 'data-fill-volume' => true]); ?>
             <?php field('price', 'Price per unit (' . $priceUnit . ')', posted('price', form_number($units, 'price', $row, 'price_per_liter')), $numeric + ['min' => '0', 'data-fill-price' => true]); ?>
-            <?php field('economy', 'Average fuel use (' . unit_symbol($units['economy']) . ')', posted('economy', form_number($units, 'economy', $row, 'consumption_l_100km')), $numeric + ['min' => '0.000001'], 'Enter the average shown by the car since the previous fill-up.'); ?>
-            <?php field('tank_level', 'Tank level before filling (%)', posted('tank_level', $row['tank_before_percent'] ?? '0'), ['type' => 'number', 'min' => '0', 'max' => '100', 'step' => '0.01', 'data-tank-level' => true], 'Leave at 0% if the tank was empty.'); ?>
+            <?php field('tank_level', 'Tank level before filling (%)', posted('tank_level', $row['tank_before_percent'] ?? '0'), ['type' => 'number', 'min' => '0', 'max' => '100', 'step' => '0.01', 'data-tank-level' => true], 'Leave at 0% if the tank was empty. This estimate is used to calculate fuel economy between fill-ups.'); ?>
         </div>
         <div class="form-actions"><button class="button button-primary" type="submit">Save fill-up</button><?= action_link('Cancel', 'history') ?><?php if ($row): ?><?= action_link('Delete', 'delete-fill', $args, 'danger') ?><?php endif ?></div>
     </section>
@@ -485,7 +484,7 @@ function history_table(array $rows, array $user, string $action): void
     <th scope="col">Date</th><th scope="col">Vehicle / station</th>
     <th scope="col">Fuel (<?= e($volume) ?>)</th><th scope="col">Price (<?= e($currency . '/' . unit_symbol($units['price'])) ?>)</th>
     <th scope="col">Paid (<?= e($currency) ?>)</th><th scope="col">Odometer (<?= e(unit_symbol($units['distance'])) ?>)</th>
-    <th scope="col">Economy (<?= e(unit_symbol($units['economy'])) ?>)</th><th scope="col">Tank before (<?= e($volume) ?>)</th><th scope="col">Actions</th>
+    <th scope="col">Estimated economy (<?= e(unit_symbol($units['economy'])) ?>)</th><th scope="col">Tank before (<?= e($volume) ?>)</th><th scope="col">Actions</th>
 </tr></thead>
 <tbody>
 <?php foreach ($rows as $row): ?>
@@ -496,7 +495,7 @@ function history_table(array $rows, array $user, string $action): void
     <td><?= e(display_value($units, 'price', $row['price_per_liter'], 3)) ?></td>
     <td><?= e(decimal((float) $row['total_paid'])) ?></td>
     <td><?= e(display_value($units, 'distance', $row['odometer_km'], 1)) ?></td>
-    <td><?= e(display_value($units, 'economy', $row['consumption_l_100km'], 1)) ?></td>
+    <td><?= e(display_value($units, 'economy', $row['calculated_consumption_l_100km'], 1)) ?></td>
     <td><?= e(display_value($units, 'volume', $row['tank_before_liters']) . ' (' . rtrim(rtrim($row['tank_before_percent'], '0'), '.') . '%)') ?></td>
     <td><?= action_link('Edit', 'fill', ['id' => $row['id']], 'quiet') ?></td>
 </tr>
@@ -508,13 +507,14 @@ function history_table(array $rows, array $user, string $action): void
 
 function economy_chart(array $rows, array $units): void
 {
+    $rows = array_values(array_filter($rows, static fn(array $row): bool => $row['calculated_consumption_l_100km'] !== null));
     if (!$rows) {
-        empty_state('No economy readings yet', 'Log a fill-up to start tracking fuel economy.', glyph: 'trend');
+        empty_state('No fuel economy estimates in this view', 'An estimate needs two fill-ups for the same vehicle with a positive distance and fuel used between them.', glyph: 'trend');
         return;
     }
     $count = count($rows);
     $rows = array_slice($rows, -120);
-    $points = array_map(static fn(array $row): float => fuel_from_metric((float) $row['consumption_l_100km'], 'economy', $units['economy']), $rows);
+    $points = array_map(static fn(array $row): float => fuel_from_metric($row['calculated_consumption_l_100km'], 'economy', $units['economy']), $rows);
     $unit = unit_symbol($units['economy']);
     $min = min($points);
     $max = max($points);
@@ -534,7 +534,7 @@ function economy_chart(array $rows, array $units): void
     }
     ?>
 <div class="chart-canvas">
-    <p class="chart-caption"><?= e($unit) ?><?= $count > count($rows) ? ' · Last 120 readings' : '' ?></p>
+    <p class="chart-caption"><?= e($unit) ?> · Estimated between fill-ups<?= $count > count($rows) ? ' · Last 120 estimates' : '' ?></p>
     <svg class="chart" viewBox="0 0 690 208" role="img" aria-label="<?= e('Fuel economy over time in ' . $unit . ', from ' . decimal($min, 2) . ' to ' . decimal($max, 2)) ?>">
         <?php for ($i = 0; $i <= 4; $i++): $y = 22 + 35 * $i; ?>
             <line class="chart-gridline" x1="66" x2="658" y1="<?= $y ?>" y2="<?= $y ?>"/>

@@ -38,7 +38,7 @@ function fillUp(
     int $car,
     string $date,
     float $odometer,
-    float $consumption,
+    float $tankBefore,
     float $volume,
     float $price,
     ?float $paid = null
@@ -48,7 +48,8 @@ function fillUp(
         'car_id' => $car,
         'filled_at' => $date,
         'odometer_km' => $odometer,
-        'consumption_l_100km' => $consumption,
+        'consumption_l_100km' => 99.0,
+        'tank_before_liters' => $tankBefore,
         'liters' => $volume,
         'price_per_liter' => $price,
         'total_paid' => $paid,
@@ -57,11 +58,11 @@ function fillUp(
 
 $fills = [
     fillUp(6, 1, '2026-02-01', 850, 7, 25, 5),
-    fillUp(5, 1, '2026-01-22', 700, 8, 25, 7),
-    fillUp(3, 1, '2026-01-11', 300, 5, 40, 3.75),
-    fillUp(4, 2, '2026-01-22', 1100, 9.5, 35, 6, 200),
-    fillUp(2, 2, '2026-01-02', 1000, 9, 20, 6),
-    fillUp(1, 1, '2026-01-01', 100, 6, 10, 6),
+    fillUp(5, 1, '2026-01-22', 700, 18, 25, 7),
+    fillUp(3, 1, '2026-01-11', 300, 10, 40, 3.75),
+    fillUp(4, 2, '2026-01-22', 1100, 5, 35, 6, 200),
+    fillUp(2, 2, '2026-01-02', 1000, 12, 20, 6),
+    fillUp(1, 1, '2026-01-01', 100, 20, 10, 6),
 ];
 
 $filtered = fuel_telemetry($fills, '2026-01-11', '2026-01-22');
@@ -73,22 +74,37 @@ expectNear($filtered['total_paid'], 525, 'Total cost honors transactions’ reco
 expectNear($filtered['avg_price_per_liter'], 5.25, 'Volume-weighted average price');
 expectNear($filtered['avg_days'], 41 / 3, 'Average gap includes previous fill before filter start');
 expectNear($filtered['distance_km'], 700, 'Distance includes previous readings for each car');
-expectNear($filtered['avg_consumption'], (5 * 200 + 9.5 * 100 + 8 * 400) / 700, 'Distance-weighted fuel economy');
-expectNear($filtered['best_consumption'], 5, 'Best economy');
-expectNear($filtered['worst_consumption'], 9.5, 'Worst economy');
+expectNear($filtered['avg_consumption'], 100 * (20 + 32 + 27) / 700, 'Fuel used per distance across valid intervals');
+expectNear($filtered['best_consumption'], 8, 'Best economy');
+expectNear($filtered['worst_consumption'], 27, 'Worst economy');
+expectSame(array_column($filtered['in_range'], 'calculated_consumption_l_100km'), [10.0, 8.0, 27.0],
+    'Each interval uses previous fuel after filling and current fuel before filling');
 
 $noSpan = fuel_telemetry($fills, '2026-01-01', '2026-01-02');
 expectSame($noSpan['distance_km'], null, 'No distance until there are comparable readings');
 expectSame($noSpan['avg_days'], null, 'No interval between different cars');
-expectNear($noSpan['avg_consumption'], 7.5, 'Arithmetic average with no odometer intervals');
+expectSame($noSpan['avg_consumption'], null, 'Legacy economy readings are ignored');
+expectSame(array_column($noSpan['in_range'], 'calculated_consumption_l_100km'), [null, null], 'First fill-ups have no economy');
 
 $sameDay = fuel_telemetry([
-    fillUp(8, 1, '2026-02-02', 990, 6, 10, 5),
-    fillUp(9, 1, '2026-02-02', 920, 7, 10, 5),
+    fillUp(8, 1, '2026-02-02', 990, 0, 10, 5),
+    fillUp(9, 1, '2026-02-02', 920, 0, 10, 5),
 ]);
 expectNear($sameDay['distance_km'], 70, 'Same-day distance follows the odometer');
 expectNear($sameDay['avg_days'], 0, 'Same-day interval');
-expectNear($sameDay['avg_consumption'], 6, 'Same-day later reading determines interval economy');
+expectNear($sameDay['avg_consumption'], 100 * 10 / 70, 'Empty tank estimates use only the previous purchased fuel');
+
+$invalid = fuel_telemetry([
+    fillUp(10, 1, '2026-02-03', 100, 0.1, 0.2, 5),
+    fillUp(11, 1, '2026-02-04', 200, 0.3, 5, 5),
+    fillUp(12, 1, '2026-02-05', 300, 6, 10, 5),
+    fillUp(13, 1, '2026-02-06', 300, 2, 12, 5),
+    fillUp(14, 1, '2026-02-07', 400, 6, 15, 5),
+]);
+expectSame(array_column($invalid['in_range'], 'calculated_consumption_l_100km'), [null, null, null, null, 8.0],
+    'Zero fuel, negative fuel or zero distance leaves economy unavailable');
+expectNear($invalid['distance_km'], 300, 'Invalid fuel balance still counts recorded distance');
+expectNear($invalid['avg_consumption'], 8, 'Only valid intervals contribute to average economy');
 
 $empty = fuel_telemetry($fills, '2026-03-01');
 expectSame($empty['fill_count'], 0, 'Empty date range');
