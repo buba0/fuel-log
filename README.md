@@ -6,7 +6,7 @@ Fuel Log is a multi-user web app for tracking fuel purchases and vehicle mileage
 
 1. Create an account, then add a vehicle and its tank capacity under **Vehicles**.
 2. Add the stations you visit under **Stations**.
-3. Choose **New fill-up**. Enter the amount added, price per unit, odometer and average fuel use shown by the vehicle. Optionally enter the estimated tank percentage before filling.
+3. Choose **New fill-up**. Enter the amount added, price per unit, and odometer. If the tank still has fuel, enter the estimated percentage remaining before filling.
 4. Use **Dashboard** for lifetime totals, a date range, or a single vehicle. Use **Fill-ups** to correct or delete an entry.
 5. Use **Preferences** to switch among metric, US imperial, UK imperial, and custom units. Distance, volume, fuel economy, and price units can each be set independently.
 
@@ -17,7 +17,8 @@ Amounts use one currency per account, initially PLN. Changing the currency code 
 - Fuel added and spending come from fill-ups dated within the filter. Each payment is rounded to two decimal places when saved, then the dashboard adds the saved amounts.
 - The estimated fuel already in the tank is the starting percentage multiplied by the vehicle's tank capacity. This estimate is saved with the fill-up and stays independent of the amount purchased.
 - Distance and time between fill-ups use consecutive entries for each vehicle. A full interval is assigned to its ending fill-up, including when the previous entry was before the filter start. A first fill-up alone has no distance or elapsed time, and entries on the same day contribute zero days.
-- Average economy weights entered average fuel use by measured distance between fills. When the view has no measured distance, it uses the arithmetic mean of the entered readings. Best and worst come from the entered readings in the date range.
+- For each vehicle, estimated fuel used is the previous fill-up's purchased fuel plus its starting tank estimate, minus the current fill-up's starting tank estimate. The odometer difference gives the interval distance. The app shows that interval's economy on the later fill-up.
+- Average economy uses total estimated fuel used divided by total distance over valid intervals. Best and worst are the most and least efficient valid intervals ending in the selected range. Intervals need positive fuel use and distance to contribute. Existing fill-ups are recalculated from their saved tank levels and odometers.
 - Average fuel price is total paid divided by fuel purchased. Cost per distance divides total spending in the date range by the recorded distance in that view.
 
 ## Self-hosting
