@@ -73,6 +73,12 @@ for (const preset of document.querySelectorAll('[data-unit-preset]')) {
   }
 }
 
+for (const preference of document.querySelectorAll('[data-theme-preference]')) {
+  preference.addEventListener('change', () => {
+    document.documentElement.dataset.theme = preference.value;
+  });
+}
+
 for (const toggle of document.querySelectorAll('[data-menu-toggle]')) {
   const sidebar = toggle.closest('.sidebar');
   const menu = document.getElementById(toggle.getAttribute('aria-controls'));
@@ -92,4 +98,38 @@ for (const toggle of document.querySelectorAll('[data-menu-toggle]')) {
   });
   mobile.addEventListener('change', updateMenu);
   updateMenu();
+}
+
+for (const button of document.querySelectorAll('[data-open-dialog]')) {
+  button.addEventListener('click', () => document.getElementById(button.dataset.openDialog)?.showModal());
+}
+for (const button of document.querySelectorAll('[data-close-dialog]')) {
+  button.addEventListener('click', () => button.closest('dialog')?.close());
+}
+for (const form of document.querySelectorAll('[data-fill-form]')) {
+  const car = form.querySelector('[data-fill-car]');
+  const meter = form.querySelector('[data-metering-field]');
+  function toggleMeter() {
+    meter.hidden = car.selectedOptions[0]?.dataset.metering !== '1';
+    meter.querySelector('input').disabled = meter.hidden;
+  }
+  car.addEventListener('change', toggleMeter);
+  toggleMeter();
+  const odometer = form.querySelector('[name=odometer]');
+  const estimated = form.querySelector('[name=estimated_odometer]');
+  odometer.addEventListener('input', () => { estimated.value = '0'; });
+  form.querySelector('[data-predict]').addEventListener('click', () => {
+    const date = form.querySelector('[name=filled_at]').value;
+    const history = JSON.parse(car.selectedOptions[0]?.dataset.history || '[]').filter(r => r.date < date);
+    const first = history[0], last = history.at(-1);
+    if (!first || history.length < 2 || first.date === last.date) {
+      form.querySelector('[data-prediction-status]').textContent = document.documentElement.lang === 'pl'
+        ? 'Potrzebne są co najmniej dwa wcześniejsze tankowania z różnych dni.' : 'At least two earlier fill-ups on different days are needed.';
+      return;
+    }
+    const daily = (last.km - first.km) / ((Date.parse(last.date) - Date.parse(first.date)) / 86400000);
+    const value = (last.km + daily * ((Date.parse(date) - Date.parse(last.date)) / 86400000)) / Number(form.dataset.distanceFactor);
+    odometer.value = value.toFixed(1);
+    estimated.value = '1';
+  });
 }
