@@ -8,6 +8,7 @@ Nginx serves assets and routes application requests to public/index.php through 
 
 | Component | Purpose |
 | --- | --- |
+| src/radius.php | Optional PAP authentication through radclient |
 | src/app.php | Authentication, prepared SQL, validation, account-scoped CRUD and preferences |
 | src/domain.php | Unit conversions, interval distances and calculated consumption |
 | src/views.php | Pages, compact history, sorting and interactive SVG charts |
@@ -42,8 +43,8 @@ Prometheus scrapes the authenticated metrics endpoint. The supplied Grafana dash
 
 XLSX and DOCX use PHP ZipArchive and Office Open XML. CSV protects formula-like user text. DOCX can be imported into Google Docs; direct cloud upload is not implemented.
 
-RADIUS setup is still in progress. This source release uses local authentication. The Ubuntu installer does not configure RADIUS.
+Optional RADIUS authentication verifies preserved bcrypt hashes over PAP; see [RADIUS administration](RADIUS.md). Without the radius configuration key, authentication stays local. The Ubuntu installer defaults to local authentication.
 
 ## Operations
 
-Run PHP lint and tests/domain.php after code changes. Apply numbered migrations before the corresponding release. Back up MySQL and the protected configuration. The Ubuntu installer targets a fresh Ubuntu 24.04 host, installs local MySQL and serves HTTP on port 8080. It refuses existing installations. Syntax checks have passed; a clean-machine installation remains unverified.
+Run PHP lint and tests/domain.php after code changes. Apply numbered migrations before the corresponding release. Back up MySQL and the protected configuration. The Ubuntu installer targets a fresh Ubuntu 24.04 host, installs local MySQL and serves HTTP on port 8080. It refuses existing installations. A fresh Ubuntu 24.04 container installation passed, including account registration, correct/incorrect login and chart navigation.

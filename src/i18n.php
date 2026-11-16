@@ -143,6 +143,7 @@ function polish_strings(): array
         'Location (optional)' => 'Lokalizacja (opcjonalnie)',
         'Add a street or town to distinguish stations with the same name.' => 'Podaj ulicę lub miejscowość, aby rozróżnić stacje o tej samej nazwie.',
         'Cancel' => 'Anuluj',
+        'The login service is unavailable. Please try again shortly.' => 'Usługa logowania jest niedostępna. Spróbuj ponownie za chwilę.',
         'Edit fill-up' => 'Edytuj tankowanie',
         'New fill-up' => 'Nowe tankowanie',
         'Set up your fill-up log' => 'Przygotuj historię tankowań',

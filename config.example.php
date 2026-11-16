@@ -6,4 +6,6 @@ return [
     'password' => 'replace-with-the-application-database-password',
     'timezone' => 'Europe/Warsaw',
     'allow_signup' => true,
+    // Optional: install freeradius-utils and configure the matching server client.
+    // 'radius' => ['server' => 'RADIUS_SERVER_IP', 'secret_file' => '/etc/fuel-log/radius.secret'],
 ];
