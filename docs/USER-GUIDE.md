@@ -35,3 +35,17 @@ On **Fill-ups**, apply the desired vehicle and date filters and choose **Downloa
 - **JSON** contains machine-readable records with the current display units and currency.
 - **XLSX** is an Excel workbook that can also be opened in Google Sheets.
 - **DOCX** is a Word document. Upload it to Google Drive and open it with Google Docs if you want to edit it there.
+
+## Additional fill-up tools
+
+Preferences can pin a default vehicle and station. With no pinned choice, the latest fill supplies them.
+
+The odometer estimate uses average distance per day between earlier entries for the chosen vehicle. It requires two earlier dates. Review the value before saving. Estimated odometers and tank corrections are marked in history.
+
+Enable fuel economy metering in the vehicle profile to reveal an optional vehicle-reported economy field. The app also calculates consumption from fuel balances.
+
+History cards show Edit and an exclamation mark for an available alert. The exclamation opens a review dialog. Recalculate alerts restores dismissed reviews. Applying an estimate marks the affected entry.
+
+A zero price represents gifted fuel. Its volume and consumption contribute to totals, while average purchase price uses paid fuel only. Fuel prices shows averages, lowest/latest/highest prices, monthly trends and station averages.
+
+Clear filters returns to the full history or dashboard.

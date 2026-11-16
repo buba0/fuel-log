@@ -175,3 +175,11 @@ $baseline[3]['liters'] = 18;
 expectSame(fuel_anomalies([...$baseline, $outlier]), [], 'A value exactly at the high-consumption cutoff is not flagged');
 
 echo "Domain checks passed.\n";
+
+$gifted = fuel_telemetry([
+    fillUp(101, 1, '2026-01-01', 100, 0, 20, 5),
+    fillUp(102, 1, '2026-01-02', 200, 0, 10, 0),
+]);
+expectNear($gifted['total_liters'], 30, 'Gifted fuel counts in volume');
+expectNear($gifted['avg_price_per_liter'], 5, 'Gifted fuel excluded from price denominator');
+expectNear($gifted['distance_km'], 100, 'Gifted fuel preserves distance');
