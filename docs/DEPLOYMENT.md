@@ -48,7 +48,7 @@ Save the server block as `/etc/nginx/sites-available/fuel-log` and replace the e
 ```nginx
 server {
     listen 80;
-    server_name fuel-log.home;
+    server_name fuel.home;
 
     root /var/www/fuel-log/public;
     index index.php;

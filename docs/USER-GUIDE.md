@@ -52,7 +52,7 @@ Clear filters returns to the full history or dashboard.
 
 ## Explore a chart point
 
-Click a dashboard chart point to open its fill-up. You can inspect the date, station, vehicle, price, odometer and tank estimate. Keyboard users can tab to a point and press Enter. Use Cancel to return to history.
+Click a dashboard chart point to open a detail popup without leaving the dashboard. It shows fuel economy, distance and days since the previous visit, fuel added, initial tank volume, odometer, unit price and amount paid, with the vehicle, station and date. Choose Edit fill-up to make a correction, or Close/Escape to return to the chart. Keyboard users can tab to a point and press Enter. Without JavaScript the point opens the fill-up editor directly.
 
 ## Correct records
 

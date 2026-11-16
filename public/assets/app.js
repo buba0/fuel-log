@@ -101,7 +101,13 @@ for (const toggle of document.querySelectorAll('[data-menu-toggle]')) {
 }
 
 for (const button of document.querySelectorAll('[data-open-dialog]')) {
-  button.addEventListener('click', () => document.getElementById(button.dataset.openDialog)?.showModal());
+  button.addEventListener('click', (event) => {
+    const dialog = document.getElementById(button.dataset.openDialog);
+    if (dialog && typeof dialog.showModal === 'function') {
+      event.preventDefault();
+      dialog.showModal();
+    }
+  });
 }
 for (const button of document.querySelectorAll('[data-close-dialog]')) {
   button.addEventListener('click', () => button.closest('dialog')?.close());

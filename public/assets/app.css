@@ -463,3 +463,10 @@ dialog::backdrop { background:#0009; }
 
 .chart a { cursor:pointer; }
 .chart a:hover .chart-point, .chart a:focus .chart-point { fill:var(--amber); stroke-width:3; }
+
+.chart-detail { width:min(42rem, calc(100vw - 2rem)); max-height:85vh; overflow:auto; }
+.chart-detail::backdrop { background:rgba(0,0,0,.55); }
+.chart-detail-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin:1.25rem 0; }
+.chart-detail-grid dt { color:var(--muted); font-size:.8rem; }
+.chart-detail-grid dd { margin:.25rem 0 0; font-weight:600; }
+@media(max-width:480px) { .chart-detail-grid { grid-template-columns:1fr; } }
