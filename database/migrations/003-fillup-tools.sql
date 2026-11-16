@@ -1,0 +1,12 @@
+SET @m = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND COLUMN_NAME='default_car_id'), 'SELECT 1', 'ALTER TABLE users ADD COLUMN default_car_id BIGINT UNSIGNED NULL');
+PREPARE migration FROM @m; EXECUTE migration; DEALLOCATE PREPARE migration;
+SET @m = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='users' AND COLUMN_NAME='default_station_id'), 'SELECT 1', 'ALTER TABLE users ADD COLUMN default_station_id BIGINT UNSIGNED NULL');
+PREPARE migration FROM @m; EXECUTE migration; DEALLOCATE PREPARE migration;
+SET @m = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='cars' AND COLUMN_NAME='fuel_metering'), 'SELECT 1', 'ALTER TABLE cars ADD COLUMN fuel_metering TINYINT NOT NULL DEFAULT 0');
+PREPARE migration FROM @m; EXECUTE migration; DEALLOCATE PREPARE migration;
+SET @m = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='fillups' AND COLUMN_NAME='estimated_tank'), 'SELECT 1', 'ALTER TABLE fillups ADD COLUMN estimated_tank TINYINT NOT NULL DEFAULT 0');
+PREPARE migration FROM @m; EXECUTE migration; DEALLOCATE PREPARE migration;
+SET @m = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='fillups' AND COLUMN_NAME='estimated_odometer'), 'SELECT 1', 'ALTER TABLE fillups ADD COLUMN estimated_odometer TINYINT NOT NULL DEFAULT 0');
+PREPARE migration FROM @m; EXECUTE migration; DEALLOCATE PREPARE migration;
+SET @m = IF(EXISTS(SELECT 1 FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME='fillups' AND COLUMN_NAME='reported_consumption'), 'SELECT 1', 'ALTER TABLE fillups ADD COLUMN reported_consumption DECIMAL(11,6) NULL');
+PREPARE migration FROM @m; EXECUTE migration; DEALLOCATE PREPARE migration;
