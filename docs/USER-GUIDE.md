@@ -44,8 +44,26 @@ The odometer estimate uses average distance per day between earlier entries for 
 
 Enable fuel economy metering in the vehicle profile to reveal an optional vehicle-reported economy field. The app also calculates consumption from fuel balances.
 
-History cards show Edit and an exclamation mark for an available alert. The exclamation opens a review dialog. Recalculate alerts restores dismissed reviews. Applying an estimate marks the affected entry.
+History rows show Edit and an exclamation mark for an available alert. The exclamation opens a review dialog. Recalculate alerts restores dismissed reviews. Applying an estimate marks the affected entry.
 
 A zero price represents gifted fuel. Its volume and consumption contribute to totals, while average purchase price uses paid fuel only. Fuel prices shows averages, lowest/latest/highest prices, monthly trends and station averages.
 
 Clear filters returns to the full history or dashboard.
+
+## Explore a chart point
+
+Click a dashboard chart point to open its fill-up. You can inspect the date, station, vehicle, price, odometer and tank estimate. Keyboard users can tab to a point and press Enter. Use Cancel to return to history.
+
+## Correct records
+
+Edit is at the right end of each compact history row. Saving changes recalculates the affected intervals, including the next fill-up. Delete opens a confirmation page. An approximately-equal marker identifies algorithm estimates; hover over it for details.
+
+## Understand the figures
+
+Fuel added includes purchases and gifted fuel. Total spent adds receipt amounts. Distance covers journeys between recorded visits. The first entry establishes a baseline. Average distance and time describe the typical gap between visits. With mpg selected, higher economy values mean better efficiency.
+
+If consumption looks wrong, check the date, odometer, purchased amount and tank level first. A missing entry can affect estimates. The exclamation opens the review dialog, where you can apply or dismiss a suggestion.
+
+## Connect other tools
+
+Create an API token in Preferences when a tool needs to read your statistics. Copy it when displayed and keep it private. Replacing or revoking it disconnects tools using that token. The configured Grafana integration uses a separate service credential.
