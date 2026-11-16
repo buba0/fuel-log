@@ -106,4 +106,4 @@ Apply database/migrations/003-fillup-tools.sql before deploying the release with
 
 The [one-command installer](../scripts/install-ubuntu.sh) targets fresh Ubuntu 24.04. Install curl first if it is absent. Run the README command as a sudo-capable administrator. It installs Nginx, PHP-FPM, ZIP and MySQL, creates a random database credential, imports the complete schema, protects runtime configuration and serves port 8080. It refuses an existing app directory or database. It does not alter the default port-80 site. Allow TCP 8080 through any host firewall when needed. Registration, login, incorrect-password rejection and chart navigation were verified in a fresh container.
 
-For subsequent upgrades follow the manual upgrade procedure above; rerunning setup is not an updater. Logs are in the normal package/systemd, Nginx and PHP-FPM logs. The optional [RADIUS integration](RADIUS.md) is configured separately.
+For subsequent upgrades follow the manual upgrade procedure above; rerunning setup is not an updater. Logs are in the normal package/systemd, Nginx and PHP-FPM logs.
