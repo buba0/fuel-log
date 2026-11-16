@@ -8,7 +8,6 @@ Nginx serves assets and routes application requests to public/index.php through 
 
 | Component | Purpose |
 | --- | --- |
-| src/radius.php | Optional PAP authentication through radclient |
 | src/app.php | Authentication, prepared SQL, validation, account-scoped CRUD and preferences |
 | src/domain.php | Unit conversions, interval distances and calculated consumption |
 | src/views.php | Pages, compact history, sorting and interactive SVG charts |
@@ -43,7 +42,6 @@ Prometheus scrapes the authenticated metrics endpoint. The supplied Grafana dash
 
 XLSX and DOCX use PHP ZipArchive and Office Open XML. CSV protects formula-like user text. DOCX can be imported into Google Docs; direct cloud upload is not implemented.
 
-Optional RADIUS authentication verifies preserved bcrypt hashes over PAP; see [RADIUS administration](RADIUS.md). Without the radius configuration key, authentication stays local. The Ubuntu installer defaults to local authentication.
 
 ## Operations
 
