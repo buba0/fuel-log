@@ -424,3 +424,39 @@ dialog::backdrop { background:#0009; }
 .chart-legend { display:flex; flex-wrap:wrap; gap:14px; font-size:.8rem; margin-block:10px; }
 .series-0 { stroke:#9670ad; color:#9670ad; }.series-1 { stroke:#399a82; color:#399a82; }.series-2 { stroke:#dd9450; color:#dd9450; }.series-3 { stroke:#6594ca; color:#6594ca; }.series-4 { stroke:#bd627d; color:#bd627d; }
 .chart-point:focus { fill:var(--amber); outline:none; }
+
+.history-toolbar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+.history-toolbar .form-actions, .history-toolbar .export-menu { margin:0; }
+.history-table-wrap { width:100%; }
+.history-table { table-layout:fixed; width:100%; font-size:clamp(.65rem,.77vw,.8rem); }
+.history-table th, .history-table td { padding:9px 5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.history-table thead th { white-space:normal; font-size:.72rem; line-height:1.25; vertical-align:bottom; }
+.history-table thead small { display:block; font-size:.65rem; font-weight:400; white-space:nowrap; }
+.history-table .history-date { width:8%; }
+.history-table .history-vehicle { width:11%; }
+.history-table .history-station { width:9%; }
+.history-table .history-volume { width:6%; }
+.history-table .history-price { width:7%; }
+.history-table .history-paid { width:8%; }
+.history-table .history-odometer { width:9%; }
+.history-table .history-distance { width:7%; }
+.history-table .history-economy { width:7%; }
+.history-table .history-tank { width:6%; }
+.history-table .history-reported { width:8%; }
+.history-table .history-actions { width:14%; text-align:right; overflow:visible; }
+.history-table td:not(.history-vehicle):not(.history-station), .history-table thead th:nth-child(n+4) { text-align:right; }
+.history-row-actions { display:flex; justify-content:flex-end; align-items:center; gap:4px; flex-wrap:nowrap; }
+.history-row-actions .button { min-height:27px; font-size:.72rem; padding:4px 6px; }
+.history-row-actions .alert-button { min-width:23px; padding:3px; }
+.history-estimate { color:var(--amber); font-size:1rem; line-height:1; }
+@media (max-width:1200px) {
+  .history-table .history-reported { display:none; }
+  .history-table { font-size:.68rem; }
+}
+@media (max-width:700px) {
+  .history-table .history-station, .history-table .history-price, .history-table .history-tank, .history-table .history-odometer { display:none; }
+  .history-table .history-actions { width:19%; }
+  .history-table .history-date { width:13%; }
+  .history-table .history-vehicle { width:17%; }
+  .history-table th, .history-table td { padding-inline:3px; }
+}

@@ -34,8 +34,8 @@ function html_start(string $title, string $theme = 'system'): void
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= e(t($title)) ?> · Fuel Log</title>
     <link rel="icon" type="image/svg+xml" href="/assets/favicon.svg">
-    <link rel="stylesheet" href="/assets/app.css?v=2">
-    <script defer src="/assets/app.js?v=2"></script>
+    <link rel="stylesheet" href="/assets/app.css?v=<?= e(substr(hash_file('sha256', __DIR__ . '/../public/assets/app.css'), 0, 12)) ?>">
+    <script defer src="/assets/app.js?v=<?= e(substr(hash_file('sha256', __DIR__ . '/../public/assets/app.js'), 0, 12)) ?>"></script>
 </head>
 <body>
 <?php
@@ -514,8 +514,10 @@ function report_page(PDO $pdo, array $user, array $cars, string $page): void
     </div>
 <?php else: ?>
     <section class="panel">
+<div class="history-toolbar">
         <?php if ($stats['in_range']): ?><?php fillup_export_menu(array_filter(['car_id' => $carId, 'from' => $from, 'to' => $to, 'sort' => $sort])); ?><?php endif ?>
         <form method="post" action="<?= e(url('recalculate')) ?>" class="form-actions"><?= csrf() ?><button class="button"><?= e(t('Recalculate alerts')) ?></button></form>
+        </div>
         <?php history_table(sort_fillup_history($stats['in_range'], $sort), $user, $rows ? '' : $add, fuel_anomalies($rows)); ?>
     </section>
 <?php endif;
@@ -582,26 +584,62 @@ function history_table(array $rows, array $user, string $action, array $alerts =
         empty_state('No fill-ups in this view', 'Log a fill-up or adjust your filters.', $action);
         return;
     }
-    ?><div class="fillup-list"><?php foreach ($rows as $row): ?>
-    <article class="fillup-card">
-      <header class="panel-header"><div><strong><?= e(localized_date($row['filled_at'])) ?> · <?= e($row['car_name']) ?></strong><p><?= e($row['station_name']) ?></p></div><div class="actions">
-      <?php if (isset($alerts[$row['id']]) && empty($row['anomaly_dismissed'])): ?><button type="button" class="button alert-button" data-open-dialog="alert-<?= e($row['id']) ?>" aria-label="<?= e(t('Review alert')) ?>">!</button><?php endif ?>
-      <?= action_link('Edit', 'fill', ['id'=>$row['id']]) ?></div></header>
-      <?php if (!empty($row['estimated_tank']) || !empty($row['estimated_odometer'])): ?><p class="estimate-mark"><?= e(t('Includes an algorithm estimate')) ?> · <?= e(t(!empty($row['estimated_tank']) ? 'Tank level' : 'Odometer')) ?></p><?php endif ?>
-      <dl class="fillup-values">
-      <?php foreach ([
-        ['Fuel added',display_value($units,'volume',$row['liters']).' '.unit_label($units['volume'])],
-        ['Price per unit',display_value($units,'price',$row['price_per_liter'],3).' '.$user['currency'].'/'.unit_label($units['price'])],
-        ['Amount paid',localized_decimal((float)$row['total_paid']).' '.$user['currency']],
-        ['Odometer',display_value($units,'distance',$row['odometer_km'],1).' '.unit_label($units['distance'])],
-        ['Distance since last fill-up',display_value($units,'distance',$row['calculated_distance_km'],1).' '.unit_label($units['distance'])],
-        ['Fuel economy',display_value($units,'economy',$row['calculated_consumption_l_100km'],1).' '.unit_label($units['economy'])],
-        ['Fuel before filling',display_value($units,'volume',$row['tank_before_liters']).' '.unit_label($units['volume'])],
-        ['Vehicle reading',display_value($units,'economy',$row['reported_consumption'] ?? null,1).' '.unit_label($units['economy'])]
-      ] as [$label,$value]): ?><div><dt><?= e(t($label)) ?></dt><dd><?= e($value) ?></dd></div><?php endforeach ?>
-      </dl>
-      <?php if ((float)$row['price_per_liter'] === 0.0): ?><small><?= e(t('Gifted fuel')) ?></small><?php endif ?>
-    </article><?php endforeach ?></div><?php
+    $headers = [
+        ['Date', '', 'date'], ['Vehicle', '', 'vehicle'], ['Station', '', 'station'],
+        ['Fuel', unit_label($units['volume']), 'volume'],
+        ['Price', $user['currency'] . '/' . unit_label($units['price']), 'price'],
+        ['Paid', $user['currency'], 'paid'],
+        ['Odometer', unit_label($units['distance']), 'odometer'],
+        ['Distance', unit_label($units['distance']), 'distance'],
+        ['Fuel economy', unit_label($units['economy']), 'economy'],
+        ['Tank before', unit_label($units['volume']), 'tank'],
+        ['Meter', unit_label($units['economy']), 'reported'],
+        ['Actions', '', 'actions'],
+    ];
+    ?>
+<div class="history-table-wrap">
+<table class="history-table">
+    <colgroup><?php foreach ($headers as [, , $column]): ?><col class="history-<?= e($column) ?>"><?php endforeach ?></colgroup>
+    <thead><tr><?php foreach ($headers as [$label, $unit, $column]): ?>
+        <th scope="col" class="history-<?= e($column) ?>"><?= e(t($label)) ?><?php if ($unit): ?><small><?= e($unit) ?></small><?php endif ?></th>
+    <?php endforeach ?></tr></thead>
+    <tbody>
+    <?php foreach ($rows as $row):
+        $estimate = [];
+        if (!empty($row['estimated_tank'])) { $estimate[] = t('Tank level'); }
+        if (!empty($row['estimated_odometer'])) { $estimate[] = t('Odometer'); }
+        $values = [
+            ['vehicle', $row['car_name']], ['station', $row['station_name']],
+            ['volume', display_value($units, 'volume', $row['liters'])],
+            ['price', display_value($units, 'price', $row['price_per_liter'], 3)],
+            ['paid', localized_decimal((float) $row['total_paid'])],
+            ['odometer', display_value($units, 'distance', $row['odometer_km'], 1)],
+            ['distance', display_value($units, 'distance', $row['calculated_distance_km'], 1)],
+            ['economy', display_value($units, 'economy', $row['calculated_consumption_l_100km'], 1)],
+            ['tank', display_value($units, 'volume', $row['tank_before_liters'])],
+            ['reported', display_value($units, 'economy', $row['reported_consumption'] ?? null, 1)],
+        ];
+        ?>
+        <tr>
+            <th scope="row" class="history-date"><time datetime="<?= e($row['filled_at']) ?>" title="<?= e(localized_date($row['filled_at'])) ?>"><?= e(localized_date($row['filled_at'], 'd.m.y')) ?></time></th>
+            <?php foreach ($values as [$column, $value]):
+                $title = $value;
+                if ($column === 'price' && (float) $row['price_per_liter'] === 0.0) { $title = t('Gifted fuel'); }
+                if ($column === 'economy') { $title .= ' · ' . t('Vehicle reading') . ' ' . display_value($units, 'economy', $row['reported_consumption'] ?? null, 1); }
+                ?>
+                <td class="history-<?= e($column) ?>" title="<?= e($title) ?>"><?= e($value) ?></td>
+            <?php endforeach ?>
+            <td class="history-actions"><div class="history-row-actions">
+                <?php if ($estimate): ?><span class="history-estimate" title="<?= e(t('Includes an algorithm estimate') . ' · ' . implode(', ', $estimate)) ?>" aria-label="<?= e(t('Includes an algorithm estimate')) ?>">≈</span><?php endif ?>
+                <?php if (isset($alerts[$row['id']]) && empty($row['anomaly_dismissed'])): ?><button type="button" class="button alert-button" data-open-dialog="alert-<?= e($row['id']) ?>" title="<?= e(t('Review alert')) ?>" aria-label="<?= e(t('Review alert')) ?>">!</button><?php endif ?>
+                <?= action_link('Edit', 'fill', ['id' => $row['id']], 'quiet') ?>
+            </div></td>
+        </tr>
+    <?php endforeach ?>
+    </tbody>
+</table>
+</div>
+<?php
 }
 
 function economy_chart(array $rows, array $units): void
