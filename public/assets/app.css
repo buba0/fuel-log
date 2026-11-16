@@ -470,3 +470,34 @@ dialog::backdrop { background:#0009; }
 .chart-detail-grid dt { color:var(--muted); font-size:.8rem; }
 .chart-detail-grid dd { margin:.25rem 0 0; font-weight:600; }
 @media(max-width:480px) { .chart-detail-grid { grid-template-columns:1fr; } }
+
+/* Gentle motion and depth without changing the compact layout. */
+.button, .range-link, .recent-row, nav a {
+  transition: background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+.button:active { transform:translateY(1px); }
+.button:focus-visible, .range-link:focus-visible, .chart a:focus-visible {
+  outline:2px solid var(--amber); outline-offset:3px;
+}
+.panel { box-shadow:0 4px 20px rgba(0,0,0,.045); }
+input, select, textarea { transition:border-color 160ms ease, box-shadow 160ms ease; }
+input:focus, select:focus, textarea:focus { box-shadow:0 0 0 3px var(--accent-tint); }
+tbody tr { transition:background-color 160ms ease; }
+.chart-point { transition:fill 160ms ease, stroke-width 160ms ease; }
+@media (hover:hover) {
+  .button:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,.09); }
+  .button:active { transform:translateY(0); }
+  tbody tr:hover { background:var(--hover); }
+}
+@media (prefers-reduced-motion:no-preference) {
+  main > .panel, main > .stats-grid { animation:fuel-enter 300ms ease-out both; }
+  dialog[open] { animation:fuel-dialog 180ms ease-out both; }
+  dialog[open]::backdrop { animation:fuel-backdrop 180ms ease-out both; }
+}
+@keyframes fuel-enter { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fuel-dialog { from { opacity:0; transform:translateY(6px) scale(.99); } to { opacity:1; transform:translateY(0) scale(1); } }
+@keyframes fuel-backdrop { from { opacity:0; } to { opacity:1; } }
+@media (prefers-reduced-motion:reduce) {
+  *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+  .button:hover, .button:active { transform:none; }
+}
