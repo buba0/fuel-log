@@ -71,7 +71,7 @@ try {
                 if (empty($config['allow_signup']) && array_key_exists('allow_signup', $config) && $page === 'register') {
                     throw new FormError(t('Account registration is closed.'));
                 }
-                authenticate($pdo, $page);
+                authenticate($pdo, $page, $config);
             } catch (FormError $exception) {
                 http_response_code(422);
                 $error = $exception->getMessage();

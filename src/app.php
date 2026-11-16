@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/domain.php';
 require_once __DIR__ . '/i18n.php';
 require_once __DIR__ . '/anomalies.php';
+require_once __DIR__ . '/radius.php';
 
 final class FormError extends RuntimeException {}
 
@@ -134,8 +135,9 @@ function my_record(PDO $pdo, string $type, int $userId, int $id): array|false
     return query($pdo, "SELECT * FROM $table WHERE id = ? AND user_id = ?", [$id, $userId])->fetch();
 }
 
-function authenticate(PDO $pdo, string $page): never
+function authenticate(PDO $pdo, string $page, array $config = []): never
 {
+    $radius = $config['radius'] ?? null;
     $username = trim(input($_POST, 'username'));
     $password = input($_POST, 'password');
     if ($page === 'register') {
@@ -145,24 +147,34 @@ function authenticate(PDO $pdo, string $page): never
         if (strlen($password) < 10 || strlen($password) > 72 || str_contains($password, "\0")) {
             throw new FormError(t('Use a password between 10 and 72 bytes.'));
         }
+        $hash = password_hash($password, PASSWORD_BCRYPT);
+        $pdo->beginTransaction();
         try {
             query($pdo, 'INSERT INTO users (username, password_hash, language) VALUES (?, ?, ?)',
-                [$username, password_hash($password, PASSWORD_DEFAULT), language()]);
+                [$username, $hash, language()]);
+            $userId = (int) $pdo->lastInsertId();
+            if ($radius) {
+                query($pdo, "INSERT INTO radius.radcheck (username, attribute, op, value) VALUES (?, 'Crypt-Password', ':=', ?)", [$username, $hash]);
+            }
+            $pdo->commit();
         } catch (PDOException $exception) {
+            $pdo->rollBack();
             if ((int) ($exception->errorInfo[1] ?? 0) === 1062) {
                 throw new FormError(t('That username is already in use.'));
             }
             throw $exception;
         }
-        $userId = (int) $pdo->lastInsertId();
     } else {
         $account = query($pdo, 'SELECT id, password_hash FROM users WHERE username = ?', [$username])->fetch();
         $hash = $account['password_hash'] ?? '$2y$10$Ojn/jbkxTufGKBo/eN9oCerF4kQUGkKsXPRPz6WZIJN9PJjKAvsWO';
-        if (strlen($password) > 72 || !password_verify($password, $hash) || !$account) {
+        $valid = $radius
+            ? ($account && radius_authenticate($radius, $username, $password))
+            : (strlen($password) <= 72 && !str_contains($password, "\0") && password_verify($password, $hash));
+        if (!$valid || !$account) {
             throw new FormError(t('The username or password is incorrect.'));
         }
         $userId = (int) $account['id'];
-        if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
+        if (!$radius && password_needs_rehash($hash, PASSWORD_DEFAULT)) {
             query($pdo, 'UPDATE users SET password_hash = ? WHERE id = ?', [password_hash($password, PASSWORD_DEFAULT), $userId]);
         }
     }

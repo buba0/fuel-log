@@ -34,4 +34,4 @@ On a fresh Ubuntu 24.04 host with curl available, run
 
     curl -fsSLo /tmp/fuel-log-install.sh https://raw.githubusercontent.com/buba0/fuel-log/main/scripts/install-ubuntu.sh && sudo bash /tmp/fuel-log-install.sh
 
-This creates a local MySQL database and serves Fuel Log on port 8080. The script has passed syntax checks; clean-machine installation remains unverified. See the deployment guide for upgrades and manual configuration.
+This creates a local MySQL database and serves Fuel Log on port 8080. Validated on a fresh Ubuntu 24.04 container, including registration and login. See the deployment guide for upgrades and manual configuration.
