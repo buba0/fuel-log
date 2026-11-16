@@ -673,7 +673,7 @@ function economy_chart(array $rows, array $units): void
     ?>
 <div class="chart-canvas"><div class="chart-legend"><?php foreach ($names as $carId => $name): ?><span class="series-<?= (int) $carId % 5 ?>"><?= e($name) ?></span><?php endforeach ?></div>
     <p class="chart-caption"><?= e($unit) ?> · <?= e(t('Estimated between fill-ups')) ?><?= $count > count($rows) ? ' · ' . e(t('Last 120 estimates')) : '' ?></p>
-    <svg class="chart" viewBox="0 0 690 208" role="img" aria-label="<?= e(t('Fuel economy over time in {unit}, from {min} to {max}', ['unit' => $unit, 'min' => localized_decimal($min), 'max' => localized_decimal($max)])) ?>">
+    <svg class="chart" viewBox="0 0 690 208" role="group" aria-label="<?= e(t('Fuel economy over time in {unit}, from {min} to {max}', ['unit' => $unit, 'min' => localized_decimal($min), 'max' => localized_decimal($max)])) ?>">
         <?php for ($i = 0; $i <= 4; $i++): $y = 22 + 35 * $i; ?>
             <line class="chart-gridline" x1="66" x2="658" y1="<?= $y ?>" y2="<?= $y ?>"/>
             <text class="chart-label" x="57" y="<?= $y + 4 ?>" text-anchor="end"><?= e(localized_decimal($high - ($high - $low) * $i / 4, $high < 3 ? 2 : 1)) ?></text>
