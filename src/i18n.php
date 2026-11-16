@@ -68,6 +68,12 @@ function localized_date(string $date, string $format = 'j M Y'): string
 function polish_strings(): array
 {
     return [
+        'Meter' => 'Pomiar',
+        'Fuel' => 'Ilość',
+        'Price' => 'Cena',
+        'Paid' => 'Kwota',
+        'Distance' => 'Dystans',
+        'Tank before' => 'Przed',
         'Close' => 'Zamknij',
         'Clear filters' => 'Wyczyść filtry',
         'Recalculate alerts' => 'Przelicz alerty',
