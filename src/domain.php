@@ -98,7 +98,9 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
     $previousByCar = [];
     $totalLiters = 0.0;
     $totalPaid = 0.0;
+    $paidLiters = 0.0;
     $distanceKm = null;
+    $distanceIntervalCount = 0;
     $intervalCount = 0;
     $totalDays = 0.0;
     $economies = [];
@@ -118,10 +120,16 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
             continue;
         }
 
+        $row['calculated_distance_km'] = null;
+        $row['calculated_interval_days'] = null;
         $row['calculated_consumption_l_100km'] = null;
+        $intervalIndex = count($inRange);
         $inRange[] = $row;
         $liters = (float) $row['liters'];
         $totalLiters += $liters;
+        if ((float) $row['price_per_liter'] > 0) {
+            $paidLiters += $liters;
+        }
         $totalPaid += (float) ($row['total_paid'] ?? round($liters * (float) $row['price_per_liter'], 2));
 
         if ($previous === null) {
@@ -129,7 +137,9 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
         }
 
         $seconds = strtotime($row['filled_at'] . ' UTC') - strtotime($previous['filled_at'] . ' UTC');
-        $totalDays += $seconds / 86400;
+        $days = $seconds / 86400;
+        $inRange[$intervalIndex]['calculated_interval_days'] = $days;
+        $totalDays += $days;
         $intervalCount++;
         if (!isset($row['odometer_km'], $previous['odometer_km'])) {
             continue;
@@ -141,6 +151,8 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
         }
 
         $distanceKm = ($distanceKm ?? 0.0) + $span;
+        $distanceIntervalCount++;
+        $inRange[$intervalIndex]['calculated_distance_km'] = $span;
         if ($span === 0.0 || !isset($previous['tank_before_liters'], $row['tank_before_liters'])) {
             continue;
         }
@@ -153,7 +165,7 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
         }
 
         $economy = 100 * $fuelUsed / $span;
-        $inRange[array_key_last($inRange)]['calculated_consumption_l_100km'] = $economy;
+        $inRange[$intervalIndex]['calculated_consumption_l_100km'] = $economy;
         $economies[] = $economy;
         $fuelUsedLiters += $fuelUsed;
         $economyDistanceKm += $span;
@@ -164,11 +176,12 @@ function fuel_telemetry(array $rows, ?string $start = null, ?string $end = null)
         'total_liters' => $totalLiters,
         'total_paid' => round($totalPaid, 2),
         'distance_km' => $distanceKm,
+        'avg_distance_km' => $distanceIntervalCount > 0 ? $distanceKm / $distanceIntervalCount : null,
         'avg_days' => $intervalCount > 0 ? $totalDays / $intervalCount : null,
         'avg_consumption' => $economyDistanceKm > 0 ? 100 * $fuelUsedLiters / $economyDistanceKm : null,
         'best_consumption' => $economies !== [] ? min($economies) : null,
         'worst_consumption' => $economies !== [] ? max($economies) : null,
-        'avg_price_per_liter' => $totalLiters > 0 ? $totalPaid / $totalLiters : null,
+        'avg_price_per_liter' => $paidLiters > 0 ? $totalPaid / $paidLiters : null,
         'cost_per_km' => $distanceKm > 0 ? $totalPaid / $distanceKm : null,
         'in_range' => $inRange,
         'interval_count' => $intervalCount,

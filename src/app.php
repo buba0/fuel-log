@@ -3,6 +3,8 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/domain.php';
+require_once __DIR__ . '/i18n.php';
+require_once __DIR__ . '/anomalies.php';
 
 final class FormError extends RuntimeException {}
 
@@ -61,9 +63,8 @@ function required_text(string $field, string $label, int $maximum, bool $optiona
     $value = trim(input($_POST, $field));
     $length = preg_match_all('/./us', $value);
     if ($length === false || $length > $maximum || (!$optional && $value === '')) {
-        throw new FormError($optional
-            ? "$label can have up to $maximum characters."
-            : "Enter $label using up to $maximum characters.");
+        throw new FormError(t($optional ? '{field} can have up to {max} characters.'
+            : 'Enter {field} using up to {max} characters.', ['field' => t($label), 'max' => $maximum]));
     }
     return $value;
 }
@@ -75,7 +76,7 @@ function number_input(string $field, string $label, float $min, float $max, ?flo
         return $default;
     }
     if (!is_numeric($raw) || !is_finite((float) $raw) || (float) $raw < $min || (float) $raw > $max) {
-        throw new FormError("Check the value entered for $label.");
+        throw new FormError(t('Check the value entered for {field}.', ['field' => t($label)]));
     }
     return (float) $raw;
 }
@@ -118,7 +119,7 @@ function metric_field(array $units, string $dimension, string $field, string $la
 {
     $value = round(fuel_to_metric(number_input($field, $label, $min === 0.0 ? 0.0 : 0.000001, 1000000000), $dimension, $units[$dimension]), $scale);
     if (!is_finite($value) || $value < $min || $value > $max) {
-        throw new FormError("Check the value entered for $label.");
+        throw new FormError(t('Check the value entered for {field}.', ['field' => t($label)]));
     }
     return $value;
 }
@@ -139,17 +140,17 @@ function authenticate(PDO $pdo, string $page): never
     $password = input($_POST, 'password');
     if ($page === 'register') {
         if (!preg_match('/^[a-zA-Z0-9_.-]{3,48}$/D', $username)) {
-            throw new FormError('Use 3–48 letters, numbers, dots, underscores or hyphens for your username.');
+            throw new FormError(t('Use 3–48 letters, numbers, dots, underscores or hyphens for your username.'));
         }
         if (strlen($password) < 10 || strlen($password) > 72 || str_contains($password, "\0")) {
-            throw new FormError('Use a password between 10 and 72 bytes.');
+            throw new FormError(t('Use a password between 10 and 72 bytes.'));
         }
         try {
-            query($pdo, 'INSERT INTO users (username, password_hash) VALUES (?, ?)',
-                [$username, password_hash($password, PASSWORD_DEFAULT)]);
+            query($pdo, 'INSERT INTO users (username, password_hash, language) VALUES (?, ?, ?)',
+                [$username, password_hash($password, PASSWORD_DEFAULT), language()]);
         } catch (PDOException $exception) {
             if ((int) ($exception->errorInfo[1] ?? 0) === 1062) {
-                throw new FormError('That username is already in use.');
+                throw new FormError(t('That username is already in use.'));
             }
             throw $exception;
         }
@@ -158,7 +159,7 @@ function authenticate(PDO $pdo, string $page): never
         $account = query($pdo, 'SELECT id, password_hash FROM users WHERE username = ?', [$username])->fetch();
         $hash = $account['password_hash'] ?? '$2y$10$Ojn/jbkxTufGKBo/eN9oCerF4kQUGkKsXPRPz6WZIJN9PJjKAvsWO';
         if (strlen($password) > 72 || !password_verify($password, $hash) || !$account) {
-            throw new FormError('The username or password is incorrect.');
+            throw new FormError(t('The username or password is incorrect.'));
         }
         $userId = (int) $account['id'];
         if (password_needs_rehash($hash, PASSWORD_DEFAULT)) {
@@ -166,7 +167,7 @@ function authenticate(PDO $pdo, string $page): never
         }
     }
     session_regenerate_id(true);
-    $_SESSION = ['user_id' => $userId, 'csrf' => bin2hex(random_bytes(32))];
+    $_SESSION = ['user_id' => $userId, 'csrf' => bin2hex(random_bytes(32)), 'language' => language()];
     go('dashboard');
 }
 
@@ -174,11 +175,26 @@ function save_car(PDO $pdo, int $userId, array $units, array|false $record): nev
 {
     $name = required_text('name', 'a vehicle name', 100);
     $capacity = metric_field($units, 'volume', 'capacity', 'tank capacity', 0.01, 99999, 5);
+    $vehicleType = input($_POST, 'vehicle_type', $record['vehicle_type'] ?? 'car');
+    $fuelType = input($_POST, 'fuel_type', $record['fuel_type'] ?? 'other');
+    if (!in_array($vehicleType, ['car','moped','motorcycle','truck','van','other'], true)
+        || !in_array($fuelType, ['petrol','diesel','lpg','hybrid','electric','other'], true)) {
+        throw new FormError(t('Choose a valid vehicle and fuel type.'));
+    }
+    $make = required_text('make', 'Make', 60, true);
+    $model = required_text('model', 'Model', 60, true);
+    $engine = required_text('engine', 'Engine', 100, true);
+    $registration = required_text('registration', 'Registration', 30, true);
+    $year = input($_POST, 'model_year') === '' ? null : number_input('model_year', 'Model year', 1886, (int) date('Y') + 2);
+    if ($year !== null && floor($year) !== $year) {
+        throw new FormError(t('Enter a whole year.'));
+    }
+    $details = [$vehicleType, $fuelType, $make, $model, $year, $engine, $registration];
     if ($record) {
-        query($pdo, 'UPDATE cars SET name = ?, tank_capacity_liters = ? WHERE id = ? AND user_id = ?',
-            [$name, $capacity, $record['id'], $userId]);
+        query($pdo, 'UPDATE cars SET name = ?, tank_capacity_liters = ?, vehicle_type = ?, fuel_type = ?, make = ?, model = ?, model_year = ?, engine = ?, registration = ?, fuel_metering = ? WHERE id = ? AND user_id = ?',
+            [$name, $capacity, ...$details, isset($_POST['fuel_metering']) ? 1 : 0, $record['id'], $userId]);
     } else {
-        query($pdo, 'INSERT INTO cars (name, tank_capacity_liters, user_id) VALUES (?, ?, ?)', [$name, $capacity, $userId]);
+        query($pdo, 'INSERT INTO cars (name, tank_capacity_liters, vehicle_type, fuel_type, make, model, model_year, engine, registration, fuel_metering, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)', [$name, $capacity, ...$details, isset($_POST['fuel_metering']) ? 1 : 0, $userId]);
     }
     go('cars', notice: 'Vehicle saved.');
 }
@@ -202,7 +218,7 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
     $station = my_record($pdo, 'station', $userId, id_value($_POST, 'station_id'));
     $date = input($_POST, 'filled_at');
     if (!$car || !$station || !valid_date($date)) {
-        throw new FormError('Choose a vehicle, station and valid fill-up date.');
+        throw new FormError(t('Choose a vehicle, station and valid fill-up date.'));
     }
     $liters = metric_field($units, 'volume', 'volume', 'fuel added', 0.00001, 99999, 5);
     $price = metric_field($units, 'price', 'price', 'price per unit', 0.0, 999999, 7);
@@ -213,6 +229,8 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
     $paid = round($liters * $price, 2);
     $before = round($capacity * $percent / 100, 5);
     $data = [$car['id'], $station['id'], $date, $liters, $price, $paid, $odometer, $percent, $capacity, $before];
+    $reported = !empty($car['fuel_metering']) && input($_POST, 'reported_consumption') !== ''
+        ? metric_field($units, 'economy', 'reported_consumption', 'Fuel economy', 0.000001, 99999, 6) : null;
     $pdo->beginTransaction();
     try {
         query($pdo, 'SELECT id FROM cars WHERE id = ? AND user_id = ? FOR UPDATE', [$car['id'], $userId]);
@@ -221,12 +239,12 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
             AND ((filled_at < ? AND odometer_km > ?) OR (filled_at > ? AND odometer_km < ?)) LIMIT 1',
             [$userId, $car['id'], $exclude, $date, $odometer, $date, $odometer])->fetchColumn();
         if ($outOfOrder) {
-            throw new FormError('The odometer reading conflicts with another fill-up for this vehicle. Check the date and reading.');
+            throw new FormError(t('The odometer reading conflicts with another fill-up for this vehicle. Check the date and reading.'));
         }
         if ($record) {
             query($pdo, 'UPDATE fillups SET car_id = ?, station_id = ?, filled_at = ?, liters = ?,
                 price_per_liter = ?, total_paid = ?, odometer_km = ?,
-                tank_before_percent = ?, tank_capacity_liters = ?, tank_before_liters = ? WHERE id = ? AND user_id = ?',
+                tank_before_percent = ?, tank_capacity_liters = ?, tank_before_liters = ?, anomaly_dismissed = 0 WHERE id = ? AND user_id = ?',
                 [...$data, $record['id'], $userId]);
         } else {
             // Satisfy the original schema's required column. Reports derive economy from the fill-up history.
@@ -234,6 +252,9 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
                 odometer_km, consumption_l_100km, tank_before_percent, tank_capacity_liters, tank_before_liters, user_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)', [...$data, $userId]);
         }
+        $savedId = $record['id'] ?? (int) $pdo->lastInsertId();
+        query($pdo, 'UPDATE fillups SET reported_consumption = ?, estimated_odometer = ? WHERE id = ? AND user_id = ?',
+            [$reported, input($_POST, 'estimated_odometer') === '1' ? 1 : 0, $savedId, $userId]);
         $pdo->commit();
     } catch (Throwable $exception) {
         $pdo->rollBack();
@@ -247,21 +268,35 @@ function save_settings(PDO $pdo, int $userId): never
     $presets = fuel_unit_presets();
     $preset = input($_POST, 'preset');
     $currency = strtoupper(trim(input($_POST, 'currency')));
+    $locale = input($_POST, 'language', language());
+    $theme = input($_POST, 'theme', 'system');
+    if (!in_array($theme, ['system', 'light', 'dark'], true)) {
+        throw new FormError(t('Choose a valid theme.'));
+    }
+    if (!in_array($locale, ['en', 'pl'], true)) {
+        throw new FormError(t('Choose English or Polish.'));
+    }
     if (!preg_match('/^[A-Z]{3}$/D', $currency) || ($preset !== 'custom' && !isset($presets[$preset]))) {
-        throw new FormError('Choose a unit preset and enter a three-letter currency code.');
+        throw new FormError(t('Choose a unit preset and enter a three-letter currency code.'));
     }
     $units = $presets[$preset] ?? [];
     if ($preset === 'custom') {
         foreach (fuel_unit_options() as $dimension => $options) {
             $unit = input($_POST, $dimension);
             if (!isset($options[$unit])) {
-                throw new FormError('Choose a valid unit for each measurement.');
+                throw new FormError(t('Choose a valid unit for each measurement.'));
             }
             $units[$dimension] = $unit;
         }
     }
+    $defaultCar = id_value($_POST, 'default_car_id');
+    $defaultStation = id_value($_POST, 'default_station_id');
+    if (($defaultCar && !my_record($pdo, 'car', $userId, $defaultCar)) || ($defaultStation && !my_record($pdo, 'station', $userId, $defaultStation))) {
+        throw new FormError(t('Choose a vehicle, station and valid fill-up date.'));
+    }
+    query($pdo, 'UPDATE users SET default_car_id = ?, default_station_id = ? WHERE id = ?', [$defaultCar ?: null, $defaultStation ?: null, $userId]);
     query($pdo, 'UPDATE users SET currency = ?, unit_preset = ?, unit_distance = ?, unit_volume = ?,
-        unit_economy = ?, unit_price = ? WHERE id = ?', [$currency, $preset, ...array_values($units), $userId]);
+        unit_economy = ?, unit_price = ?, language = ?, theme = ? WHERE id = ?', [$currency, $preset, ...array_values($units), $locale, $theme, $userId]);
     go('settings', notice: 'Preferences saved.');
 }
 
