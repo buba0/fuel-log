@@ -668,7 +668,7 @@ function economy_chart(array $rows, array $units): void
         $y = round(162 - 140 * ($points[$index] - $low) / ($high - $low), 1);
         $series[$row['car_id']][] = $x . ',' . $y;
         $names[$row['car_id']] = $row['car_name'];
-        $dots[] = [$x, $y, $row['car_name'] . ' · ' . localized_date($row['filled_at']) . ' · ' . localized_decimal($points[$index]) . ' ' . $unit];
+        $dots[] = [$x, $y, $row['id'], $row['car_name'] . ' · ' . localized_date($row['filled_at']) . ' · ' . localized_decimal($points[$index]) . ' ' . $unit];
     }
     ?>
 <div class="chart-canvas"><div class="chart-legend"><?php foreach ($names as $carId => $name): ?><span class="series-<?= (int) $carId % 5 ?>"><?= e($name) ?></span><?php endforeach ?></div>
@@ -681,8 +681,12 @@ function economy_chart(array $rows, array $units): void
         <?php foreach ($series as $carId => $line): ?>
             <polyline class="chart-line series-<?= (int) $carId % 5 ?>" points="<?= e(implode(' ', $line)) ?>"/>
         <?php endforeach ?>
-        <?php foreach ($dots as [$x, $y, $label]): ?>
-            <circle tabindex="0" class="chart-point" cx="<?= e($x) ?>" cy="<?= e($y) ?>" r="3.7"><title><?= e($label) ?></title></circle>
+        <?php foreach ($dots as [$x, $y, $fillId, $label]): ?>
+            <a href="<?= e(url('fill', ['id' => $fillId])) ?>" aria-label="<?= e($label . ' · ' . t('Edit fill-up')) ?>">
+                <title><?= e($label) ?></title>
+                <circle class="chart-hit" cx="<?= e($x) ?>" cy="<?= e($y) ?>" r="12" fill="transparent"/>
+                <circle class="chart-point" cx="<?= e($x) ?>" cy="<?= e($y) ?>" r="3.7"/>
+            </a>
         <?php endforeach ?>
         <text class="chart-label" x="<?= $start === $end ? 362 : 66 ?>" y="192"<?= $start === $end ? ' text-anchor="middle"' : '' ?>><?= e(localized_date($rows[0]['filled_at'])) ?></text>
         <?php if ($start !== $end): ?><text class="chart-label" x="658" y="192" text-anchor="end"><?= e(localized_date($rows[array_key_last($rows)]['filled_at'])) ?></text><?php endif ?>
