@@ -505,7 +505,7 @@ function report_page(PDO $pdo, array $user, array $cars, string $page): void
     <div class="content-grid report-grid">
         <section class="panel">
             <div class="panel-header"><h2><?= e(t('Fuel economy')) ?></h2></div>
-            <?php economy_chart($stats['in_range'], units_for($user)); ?>
+            <?php economy_chart($stats['in_range'], units_for($user), $user['currency']); ?>
         </section>
         <section class="panel">
             <div class="panel-header"><h2><?= e(t('Recent fill-ups')) ?></h2><?= action_link('View all', 'history', array_filter(['car_id' => $carId, 'from' => $from, 'to' => $to]), 'quiet', 'arrow') ?></div>
@@ -642,7 +642,7 @@ function history_table(array $rows, array $user, string $action, array $alerts =
 <?php
 }
 
-function economy_chart(array $rows, array $units): void
+function economy_chart(array $rows, array $units, string $currency = 'PLN'): void
 {
     $rows = array_values(array_filter($rows, static fn(array $row): bool => $row['calculated_consumption_l_100km'] !== null));
     if (!$rows) {
@@ -682,7 +682,7 @@ function economy_chart(array $rows, array $units): void
             <polyline class="chart-line series-<?= (int) $carId % 5 ?>" points="<?= e(implode(' ', $line)) ?>"/>
         <?php endforeach ?>
         <?php foreach ($dots as [$x, $y, $fillId, $label]): ?>
-            <a href="<?= e(url('fill', ['id' => $fillId])) ?>" aria-label="<?= e($label . ' · ' . t('Edit fill-up')) ?>">
+            <a href="<?= e(url('fill', ['id' => $fillId])) ?>" data-open-dialog="chart-fill-<?= (int) $fillId ?>" aria-haspopup="dialog" aria-label="<?= e($label . ' · ' . t('Fill-up details')) ?>">
                 <title><?= e($label) ?></title>
                 <circle class="chart-hit" cx="<?= e($x) ?>" cy="<?= e($y) ?>" r="12" fill="transparent"/>
                 <circle class="chart-point" cx="<?= e($x) ?>" cy="<?= e($y) ?>" r="3.7"/>
@@ -691,6 +691,30 @@ function economy_chart(array $rows, array $units): void
         <text class="chart-label" x="<?= $start === $end ? 362 : 66 ?>" y="192"<?= $start === $end ? ' text-anchor="middle"' : '' ?>><?= e(localized_date($rows[0]['filled_at'])) ?></text>
         <?php if ($start !== $end): ?><text class="chart-label" x="658" y="192" text-anchor="end"><?= e(localized_date($rows[array_key_last($rows)]['filled_at'])) ?></text><?php endif ?>
     </svg>
+    <?php foreach ($rows as $row): ?>
+    <dialog class="panel chart-detail" id="chart-fill-<?= (int) $row['id'] ?>" aria-labelledby="chart-title-<?= (int) $row['id'] ?>">
+        <div class="section-heading">
+            <h2 id="chart-title-<?= (int) $row['id'] ?>"><?= e(t('Fill-up details')) ?></h2>
+            <button class="button" type="button" data-close-dialog><?= e(t('Close')) ?></button>
+        </div>
+        <p><?= e($row['car_name'] . ' · ' . localized_date($row['filled_at']) . ' · ' . $row['station_name']) ?></p>
+        <dl class="chart-detail-grid">
+            <?php foreach ([
+                t('Fuel economy') => display_value($units, 'economy', $row['calculated_consumption_l_100km']) . ' ' . unit_label($units['economy']),
+                t('Distance since last fill-up') => display_value($units, 'distance', $row['calculated_distance_km']) . ' ' . unit_label($units['distance']),
+                t('Days since last fill-up') => localized_decimal($row['calculated_interval_days'] ?? 0, 1),
+                t('Fuel added') => display_value($units, 'volume', $row['liters']) . ' ' . unit_label($units['volume']),
+                t('Fuel before filling') => display_value($units, 'volume', $row['tank_before_liters']) . ' ' . unit_label($units['volume']),
+                t('Odometer') => display_value($units, 'distance', $row['odometer_km']) . ' ' . unit_label($units['distance']),
+                t('Unit price') => display_value($units, 'price', $row['price_per_liter'], 3) . ' ' . $currency . '/' . unit_label($units['price']),
+                t('Amount paid') => localized_decimal($row['total_paid'], 2) . ' ' . $currency,
+            ] as $label => $value): ?>
+                <div><dt><?= e($label) ?></dt><dd><?= e($value) ?></dd></div>
+            <?php endforeach ?>
+        </dl>
+        <?= action_link('Edit fill-up', 'fill', ['id' => $row['id']]) ?>
+    </dialog>
+    <?php endforeach ?>
 </div>
 <?php
 }
