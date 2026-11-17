@@ -2,3 +2,8 @@
 config.php
 *.local.php
 .DS_Store
+
+# Local Xcode state
+xcuserdata/
+*.xcuserstate
+ios/FuelLog.xcodeproj/project.xcworkspace/
