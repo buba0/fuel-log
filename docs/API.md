@@ -17,13 +17,13 @@ Either endpoint accepts optional `from` and `to` in inclusive `YYYY-MM-DD` forma
 
 API units are kilometers, liters, liters per 100 kilometers, and days. Monetary amounts are in the account's currency, and unit prices are per liter. Display preferences affect the website and downloads. API values stay in these canonical units. JSON uses `null` for unavailable calculated measurements, and Prometheus omits those samples.
 
-Example using Bash. The token is read without echoing it and provided to curl over stdin. Use the app's current LAN address from the [deployment guide](DEPLOYMENT.md) if local DNS is unavailable.
+Example using Bash. The token is read without echoing it and provided to curl over stdin. Replace fuel.example.com with your deployment address.
 
 ```bash
 read -r -s -p 'Fuel Log API token: ' FUEL_LOG_TOKEN
 printf '\n'
 curl --fail --silent --show-error --config - \
-  'http://fuel.home/?page=api&format=json&from=2026-01-01&to=2026-01-31' <<EOF_HEADER
+  'https://fuel.example.com/?page=api&format=json&from=2026-01-01&to=2026-01-31' <<EOF_HEADER
 header = "Authorization: Bearer ${FUEL_LOG_TOKEN}"
 EOF_HEADER
 unset FUEL_LOG_TOKEN
@@ -53,7 +53,7 @@ Configure a job to scrape the metrics endpoint every 30 seconds.
 
 ```yaml
 scrape_configs:
-  - job_name: fuel-log-buba
+  - job_name: fuel-log
     scrape_interval: 30s
     metrics_path: /
     params:
@@ -63,21 +63,20 @@ scrape_configs:
       type: Bearer
       credentials_file: /etc/prometheus/fuel-log.token
     static_configs:
-      - targets: [fuel.home:80]
+      - targets: [fuel.example.com:80]
 ```
 
 Use the Prometheus data source in Grafana. Aggregate samples have `car_id="all"`. Use a numeric `car_id` label for one vehicle. The following queries can populate dashboard stat panels.
 
 ```promql
-fuel_log_avg_distance_km{job="fuel-log-buba", car_id="all"}
-fuel_log_avg_days{job="fuel-log-buba", car_id="all"}
-fuel_log_avg_consumption{job="fuel-log-buba", car_id="all"}
-fuel_log_total_paid{job="fuel-log-buba", car_id="all"}
+fuel_log_avg_distance_km{job="fuel-log", car_id="all"}
+fuel_log_avg_days{job="fuel-log", car_id="all"}
+fuel_log_avg_consumption{job="fuel-log", car_id="all"}
+fuel_log_total_paid{job="fuel-log", car_id="all"}
 ```
 
 The per-fill series use the `fuel_log_fill_` prefix and identify each fill-up by `fill_id`, vehicle, station, and date. `fuel_log_fill_timestamp_seconds` gives the actual fill-up date as a Unix timestamp. Scrape times reflect when Prometheus received the values.
 
-The homelab dashboard is [Fuel Log in Grafana](http://grafana.home:3000/d/fuel-log-buba/fuel-log-buba).
 
 ## Metric catalog
 
@@ -105,3 +104,5 @@ The monthly series cover complete months touched by the requested range, while a
 The JSON object contains `version`, `user`, `currency`, `units`, `statistics`, and `fillups`. Each fill-up includes its identifiers, date, recorded canonical measurements and calculated interval fields. The API is read-only; it does not create or edit records. There is no pagination. Avoid placing bearer tokens in URLs. Responses are not cached by the app.
 
 Import [grafana-dashboard.json](grafana-dashboard.json). Select your Prometheus data source and adjust the job/account selectors. Monetary panel labels must match the monitored account's currency. A different currency setting does not convert historical spending.
+
+The example dashboard uses `MONITORED_USERNAME` as a placeholder. Replace it with the account to monitor before importing. Replace the example application URL as well.

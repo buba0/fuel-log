@@ -3,10 +3,10 @@
 Fuel Log tracks vehicle fuel purchases, odometer readings, and fuel economy. Each account has its own vehicles, stations, fill-ups, units, language, theme, and API access.
 
 - [User guide](docs/USER-GUIDE.md) covers fill-ups, estimates, anomaly review, filters, and exports.
-- [Deployment guide](docs/DEPLOYMENT.md) covers a fresh Ubuntu install, MySQL migrations, and the homelab layout.
+- [Deployment guide](docs/DEPLOYMENT.md) covers a fresh Ubuntu install, MySQL migrations, and web-server configuration.
 - [API and Grafana](docs/API.md) covers bearer tokens, JSON, Prometheus metrics, and dashboard setup.
 
-Open Fuel Log on the LAN at [fuel.home](http://fuel.home/). If the name is unavailable, use the container's [current DHCP address](http://10.10.70.36/). Use **Vehicles** and **Stations** to set up your first fill-up, then use **Dashboard** to see your totals. English and Polish are available under **Preferences**.
+After installation, create an account and add a vehicle and fuel station to record your first fill-up. The dashboard summarizes spending, distance and fuel economy. English and Polish are available in Preferences.
 
 ## Development
 

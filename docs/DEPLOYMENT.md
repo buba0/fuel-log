@@ -48,7 +48,7 @@ Save the server block as `/etc/nginx/sites-available/fuel-log` and replace the e
 ```nginx
 server {
     listen 80;
-    server_name fuel.home;
+    server_name fuel.example.com;
 
     root /var/www/fuel-log/public;
     index index.php;
@@ -98,18 +98,6 @@ sudo systemctl reload php8.3-fpm
 ```
 
 Verify sign-in, dashboard, downloads, and any configured metrics scrape after the upgrade. Keep the previous release available so you can switch the symlink back if needed.
-
-## Homelab layout
-
-| Service | Location |
-| --- | --- |
-| Fuel Log and Nginx | PVE2 CT 111 at [fuel.home](http://fuel.home/) |
-| Application files | `/var/www/fuel-log` points to a release directory under `/var/www/fuel-log-releases` |
-| App runtime config | `/etc/fuel-log/config.php` owned by `root:www-data`, mode `0640` |
-| MySQL | CT 107 at `10.10.70.9`, database `fuel_log` |
-| Prometheus and Grafana | PVE1 CT 109, scrape job `fuel-log-buba` |
-
-If `fuel.home` does not resolve, CT 111 currently answers at [10.10.70.36](http://10.10.70.36/). Check the active DHCP lease if this address changes.
 
 Apply database/migrations/003-fillup-tools.sql before deploying the release with defaults, vehicle metering and estimate markers.
 

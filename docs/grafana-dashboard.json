@@ -1,6 +1,6 @@
 {
-  "uid": "fuel-log-buba",
-  "title": "Fuel Log · buba",
+  "uid": "fuel-log",
+  "title": "Fuel Log",
   "tags": [
     "fuel-log",
     "vehicles"
@@ -29,7 +29,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_total_liters{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_total_liters{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -80,7 +80,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_total_paid{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_total_paid{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -131,7 +131,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_distance_km{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_distance_km{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -182,7 +182,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_count{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_fill_count{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -233,7 +233,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_consumption{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_avg_consumption{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -284,7 +284,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_distance_km{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_avg_distance_km{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -335,7 +335,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_days{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_avg_days{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -386,7 +386,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_best_consumption{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_best_consumption{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -437,7 +437,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_worst_consumption{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_worst_consumption{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -488,7 +488,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_price_per_liter{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_avg_price_per_liter{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -539,7 +539,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_cost_per_km{user=\"buba\",car_id=\"all\"}",
+          "expr": "fuel_log_cost_per_km{user=\"MONITORED_USERNAME\",car_id=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -590,7 +590,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "(time() - fuel_log_last_fill_timestamp_seconds{user=\"buba\"}) / 86400",
+          "expr": "(time() - fuel_log_last_fill_timestamp_seconds{user=\"MONITORED_USERNAME\"}) / 86400",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -641,7 +641,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "up{job=\"fuel-log-buba\"}",
+          "expr": "up{job=\"fuel-log\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -692,7 +692,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_anomaly_count{user=\"buba\"}",
+          "expr": "fuel_log_anomaly_count{user=\"MONITORED_USERNAME\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -756,7 +756,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**buba · Fuel Log**  \nLifetime values and recorded monthly totals refresh every 30 seconds. Blank economy requires a second usable fill-up. Tank estimates affect consumption. Grafana’s time picker controls monitoring samples; Fuel Log provides filters by fill-up date. [Open Fuel Log](http://10.10.70.36/)"
+        "content": "**Fuel Log**  \nLifetime values and recorded monthly totals refresh every 30 seconds. Blank economy requires a second usable fill-up. Tank estimates affect consumption. Grafana’s time picker controls monitoring samples; Fuel Log provides filters by fill-up date. [Open Fuel Log](https://fuel.example.com/)"
       },
       "description": ""
     },
@@ -774,7 +774,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_month_total_paid{user=\"buba\"}",
+          "expr": "fuel_log_month_total_paid{user=\"MONITORED_USERNAME\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -849,7 +849,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_month_total_liters{user=\"buba\"}",
+          "expr": "fuel_log_month_total_liters{user=\"MONITORED_USERNAME\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -924,7 +924,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_count{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_fill_count{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -936,7 +936,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_total_liters{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_total_liters{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "B",
           "instant": true,
           "range": false,
@@ -948,7 +948,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_total_paid{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_total_paid{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "C",
           "instant": true,
           "range": false,
@@ -960,7 +960,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_distance_km{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_distance_km{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "D",
           "instant": true,
           "range": false,
@@ -972,7 +972,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_distance_km{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_avg_distance_km{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "E",
           "instant": true,
           "range": false,
@@ -984,7 +984,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_days{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_avg_days{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "F",
           "instant": true,
           "range": false,
@@ -996,7 +996,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_avg_consumption{user=\"buba\",car_id!=\"all\"}",
+          "expr": "fuel_log_avg_consumption{user=\"MONITORED_USERNAME\",car_id!=\"all\"}",
           "refId": "G",
           "instant": true,
           "range": false,
@@ -1076,7 +1076,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_liters{user=\"buba\"}",
+          "expr": "fuel_log_fill_liters{user=\"MONITORED_USERNAME\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -1088,7 +1088,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_total_paid{user=\"buba\"}",
+          "expr": "fuel_log_fill_total_paid{user=\"MONITORED_USERNAME\"}",
           "refId": "B",
           "instant": true,
           "range": false,
@@ -1100,7 +1100,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_price_per_liter{user=\"buba\"}",
+          "expr": "fuel_log_fill_price_per_liter{user=\"MONITORED_USERNAME\"}",
           "refId": "C",
           "instant": true,
           "range": false,
@@ -1112,7 +1112,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_odometer_km{user=\"buba\"}",
+          "expr": "fuel_log_fill_odometer_km{user=\"MONITORED_USERNAME\"}",
           "refId": "D",
           "instant": true,
           "range": false,
@@ -1124,7 +1124,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_calculated_distance_km{user=\"buba\"}",
+          "expr": "fuel_log_fill_calculated_distance_km{user=\"MONITORED_USERNAME\"}",
           "refId": "E",
           "instant": true,
           "range": false,
@@ -1136,7 +1136,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_calculated_consumption_l_100km{user=\"buba\"}",
+          "expr": "fuel_log_fill_calculated_consumption_l_100km{user=\"MONITORED_USERNAME\"}",
           "refId": "F",
           "instant": true,
           "range": false,
@@ -1148,7 +1148,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_tank_before_liters{user=\"buba\"}",
+          "expr": "fuel_log_fill_tank_before_liters{user=\"MONITORED_USERNAME\"}",
           "refId": "G",
           "instant": true,
           "range": false,
@@ -1160,7 +1160,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_fill_tank_before_percent{user=\"buba\"}",
+          "expr": "fuel_log_fill_tank_before_percent{user=\"MONITORED_USERNAME\"}",
           "refId": "H",
           "instant": true,
           "range": false,
@@ -1241,7 +1241,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_station_total_paid{user=\"buba\"}",
+          "expr": "fuel_log_station_total_paid{user=\"MONITORED_USERNAME\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -1253,7 +1253,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_station_total_liters{user=\"buba\"}",
+          "expr": "fuel_log_station_total_liters{user=\"MONITORED_USERNAME\"}",
           "refId": "B",
           "instant": true,
           "range": false,
@@ -1328,7 +1328,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_month_distance_km{user=\"buba\"}",
+          "expr": "fuel_log_month_distance_km{user=\"MONITORED_USERNAME\"}",
           "refId": "A",
           "instant": true,
           "range": false,
@@ -1340,7 +1340,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_month_avg_consumption{user=\"buba\"}",
+          "expr": "fuel_log_month_avg_consumption{user=\"MONITORED_USERNAME\"}",
           "refId": "B",
           "instant": true,
           "range": false,
@@ -1352,7 +1352,7 @@
             "type": "prometheus",
             "uid": "prometheus"
           },
-          "expr": "fuel_log_month_fill_count{user=\"buba\"}",
+          "expr": "fuel_log_month_fill_count{user=\"MONITORED_USERNAME\"}",
           "refId": "C",
           "instant": true,
           "range": false,
