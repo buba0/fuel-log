@@ -99,7 +99,6 @@ sudo systemctl reload php8.3-fpm
 
 Verify sign-in, dashboard, downloads, and any configured metrics scrape after the upgrade. Keep the previous release available so you can switch the symlink back if needed.
 
-
 Apply database/migrations/003-fillup-tools.sql before deploying the release with defaults, vehicle metering and estimate markers.
 
 ## Automated installation
