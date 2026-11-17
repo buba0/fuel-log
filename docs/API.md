@@ -2,7 +2,7 @@
 
 ## Create or revoke access
 
-In **Preferences → API access**, choose **Create API token** and copy the token when it is shown. Each token grants read access to the account's own data. Fuel Log stores its SHA-256 hash. Use **Replace API token** to rotate it or **Revoke API token** to disable it.
+In **Preferences → API access**, choose **Create API token** and copy the token when it is shown. Personal tokens grant read access and permission to create fill-ups in the account. Grafana service tokens remain read-only. Fuel Log stores its SHA-256 hash. Use **Replace API token** to rotate it or **Revoke API token** to disable it.
 
 Send the token in the `Authorization: Bearer` header. Keep it in a protected secret store or file. A deployment administrator can configure a separate Grafana service token so revoking or replacing a personal token leaves the monitoring connection intact.
 
@@ -101,8 +101,14 @@ Monthly metrics have prefix `fuel_log_month_`: `total_liters`, `total_paid`, `di
 
 The monthly series cover complete months touched by the requested range, while aggregate and per-fill series follow the exact date range. Anomaly count uses full available vehicle history. Stations with identical names share the station label, so use distinct station names for unambiguous monitoring. Per-fill series grow with history size; size Prometheus retention accordingly.
 
-The JSON object contains `version`, `user`, `currency`, `units`, `statistics`, and `fillups`. Each fill-up includes its identifiers, date, recorded canonical measurements and calculated interval fields. The API is read-only; it does not create or edit records. There is no pagination. Avoid placing bearer tokens in URLs. Responses are not cached by the app.
+The JSON object contains `version`, `user`, `currency`, `units`, `statistics`, and `fillups`. Each fill-up includes its identifiers, date, recorded canonical measurements and calculated interval fields. Personal tokens can create fill-ups through the endpoint below; editing/deleting is not exposed. There is no pagination. Avoid placing bearer tokens in URLs. Responses are not cached by the app.
 
 Import [grafana-dashboard.json](grafana-dashboard.json). Select your Prometheus data source and adjust the job/account selectors. Monetary panel labels must match the monitored account's currency. A different currency setting does not convert historical spending.
 
 The example dashboard uses `MONITORED_USERNAME` as a placeholder. Replace it with the account to monitor before importing. Replace the example application URL as well.
+
+## Native fill-up entry
+
+`GET /?page=api&resource=fill-form` returns owned cars (including capacity/metering), stations, currency and defaults (preferred or latest vehicle/station and latest price).
+
+`POST /?page=api&resource=fillups` accepts a personal bearer token and `Content-Type: application/json`. Send `car_id`, `station_id`, `filled_at` (YYYY-MM-DD), `volume` (litres), `price` (currency/litre), `odometer` (km), and `tank_level` (percent before filling, defaults to zero). Optional `reported_consumption` uses L/100 km for supported vehicles. The server calculates total paid and tank volume and checks ownership and odometer chronology. Success returns HTTP 201 with `id`; validation errors return 422, invalid JSON 400, wrong content type 415, and service-token writes 403. Requests are not automatically retried; after an uncertain network failure check history before resubmitting.
