@@ -24,3 +24,7 @@ The phone needs network access to the server. HTTPS is supported; HTTP is allowe
 This version only reads data. It does not yet create/edit/delete records, manage vehicles or stations, review alerts, export files, offer custom units or provide Polish native labels. The existing web app retains those features. Data stays in memory; offline editing and persistent offline storage are not provided.
 
 The API token is scoped to the user's existing account. No server changes are required.
+
+## Personal HTTP server exceptions
+
+The default transport policy allows local networking without disabling ATS globally. For a local hostname that iOS still blocks, copy `FuelLog/Info.plist` to the gitignored `FuelLog/Info.local.plist`. Add only that hostname under `NSAppTransportSecurity → NSExceptionDomains` with `NSExceptionAllowsInsecureHTTPLoads = YES`. Create the gitignored `Local.xcconfig` containing `FUEL_LOG_INFO_PLIST = FuelLog/Info.local.plist`. Rebuild and run from Xcode. Keep private hostnames in these ignored files. HTTPS still requires a TLS-enabled server and valid certificate.

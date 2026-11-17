@@ -1,0 +1,2 @@
+FUEL_LOG_INFO_PLIST = FuelLog/Info.plist
+#include? "Local.xcconfig"

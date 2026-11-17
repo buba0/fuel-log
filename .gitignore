@@ -7,3 +7,7 @@ config.php
 xcuserdata/
 *.xcuserstate
 ios/FuelLog.xcodeproj/project.xcworkspace/
+
+# Private per-installation transport exceptions
+ios/Local.xcconfig
+ios/FuelLog/Info.local.plist
