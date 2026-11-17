@@ -2,7 +2,7 @@
 
 ## Create or revoke access
 
-In **Preferences → API access**, choose **Create API token** and copy the token when it is shown. Personal tokens grant read access and permission to create fill-ups in the account. Grafana service tokens remain read-only. Fuel Log stores its SHA-256 hash. Use **Replace API token** to rotate it or **Revoke API token** to disable it.
+In **Preferences → API access**, choose **Create API token** and copy the token when it is shown. Personal tokens grant read access and permission to create fill-ups in the account. Grafana service tokens remain read-only. Fuel Log stores its SHA-256 hash. Give each token a name, such as a device or integration. Creating another token leaves existing tokens active. Revoke tokens individually using the button next to their name. Legacy tokens remain valid and appear as Existing API token.
 
 Send the token in the `Authorization: Bearer` header. Keep it in a protected secret store or file. A deployment administrator can configure a separate Grafana service token so revoking or replacing a personal token leaves the monitoring connection intact.
 

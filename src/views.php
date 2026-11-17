@@ -341,7 +341,7 @@ function delete_form(array $row): void
 <?php
 }
 
-function settings_page(array $user, array $cars = [], array $stations = []): void
+function settings_page(array $user, array $cars = [], array $stations = [], array $tokens = []): void
 {
     $presets = fuel_unit_presets();
     $defaultCars = ['' => t('Use last fill-up')] + array_column($cars, 'name', 'id');
@@ -370,11 +370,11 @@ function settings_page(array $user, array $cars = [], array $stations = []): voi
     </div>
     <div class="form-actions"><button class="button button-primary" type="submit"><?= e(t('Save preferences')) ?></button></div>
 </form>
-<?php api_preferences($user); ?>
+<?php api_preferences($user, $tokens); ?>
 <?php
 }
 
-function api_preferences(array $user): void
+function api_preferences(array $user, array $tokens = []): void
 {
     $token = $_SESSION['new_api_token'] ?? null;
     unset($_SESSION['new_api_token']);
@@ -388,15 +388,25 @@ function api_preferences(array $user): void
         <dt><?= e(t('JSON API')) ?></dt><dd><code><?= e(url('api', ['format' => 'json'])) ?></code></dd>
         <dt><?= e(t('Metrics')) ?></dt><dd><code><?= e(url('api', ['format' => 'metrics'])) ?></code></dd>
     </dl>
-    <?php if ($hasToken && is_string($token) && hash_equals($tokenHash, hash('sha256', $token))): ?>
+    <?php if (is_string($token)): ?>
         <div class="notice" role="status"><?= e(t('Copy this token now. It is shown once.')) ?></div>
         <div class="form-grid form-grid-single"><?php field('new_api_token', 'API token', $token, ['readonly' => true, 'spellcheck' => 'false', 'autocomplete' => 'off']); ?></div>
     <?php endif ?>
     <form class="form-actions" method="post" action="<?= e(url('api-token')) ?>">
         <?= csrf() ?>
-        <button class="button button-secondary" type="submit" name="action" value="create"><?= e(t($hasToken ? 'Replace API token' : 'Create API token')) ?></button>
-        <?php if ($hasToken): ?><button class="button button-danger" type="submit" name="action" value="revoke"><?= e(t('Revoke API token')) ?></button><?php endif ?>
+        <?php field('token_name', 'Token name', '', ['maxlength' => 80]); ?>
+        <button class="button button-secondary" type="submit" name="action" value="create"><?= e(t('Create API token')) ?></button>
     </form>
+    <p><?= e(t('Each personal token can read data and add fill-ups. Revoke only the token you no longer need.')) ?></p>
+    <?php if ($hasToken): $tokens[] = ['id' => 'legacy', 'name' => t('Existing API token'), 'created_at' => '']; endif ?>
+    <?php foreach ($tokens as $item): ?>
+    <form class="form-actions" method="post" action="<?= e(url('api-token')) ?>">
+        <?= csrf() ?>
+        <input type="hidden" name="token_id" value="<?= e($item['id']) ?>">
+        <span><strong><?= e($item['name']) ?></strong> <small><?= e($item['created_at']) ?></small></span>
+        <button class="button button-danger" name="action" value="revoke"><?= e(t('Revoke API token')) ?></button>
+    </form>
+    <?php endforeach ?>
 </section>
 <?php
 }

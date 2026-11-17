@@ -5,7 +5,9 @@ function api_response(PDO $pdo): never
 {
     $auth = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
     $hash = preg_match('/^Bearer ([a-f0-9]{64})$/D', $auth, $match) ? hash('sha256', $match[1]) : '';
+    $personal = $hash ? query($pdo, 'SELECT user_id FROM api_tokens WHERE token_hash = ?', [$hash])->fetchColumn() : false;
     $user = $hash ? query($pdo, 'SELECT * FROM users WHERE api_token_hash = ? OR grafana_token_hash = ?', [$hash, $hash])->fetch() : false;
+    if ($personal) { $user = query($pdo, 'SELECT * FROM users WHERE id = ?', [$personal])->fetch(); }
     if (!$user) {
         http_response_code(401);
         header('Content-Type: application/json');
@@ -16,7 +18,7 @@ function api_response(PDO $pdo): never
     $method = $_SERVER['REQUEST_METHOD'];
     $resource = input($_GET, 'resource');
     if ($method === 'POST') {
-        if (!$user['api_token_hash'] || !hash_equals($user['api_token_hash'], $hash)) {
+        if (!$personal && (!$user['api_token_hash'] || !hash_equals($user['api_token_hash'], $hash))) {
             api_json(['error' => 'A personal API token is required to create fill-ups.'], 403);
         }
         if ($resource !== 'fillups') { api_json(['error' => 'Unknown write resource.'], 404); }

@@ -135,7 +135,19 @@ try {
                         throw new FormError(t('Choose a valid action.'));
                     }
                     $token = $action === 'create' ? bin2hex(random_bytes(32)) : null;
-                    query($pdo, 'UPDATE users SET api_token_hash = ? WHERE id = ?', [$token ? hash('sha256', $token) : null, $userId]);
+                    if ($token) {
+                        $name = trim(input($_POST, 'token_name')) ?: t('API token');
+                        if (preg_match_all('/./us', $name) > 80 || !preg_match('//u', $name)) {
+                            throw new FormError(t('Token name must be at most 80 characters.'));
+                        }
+                        query($pdo, 'INSERT INTO api_tokens (user_id, name, token_hash) VALUES (?, ?, ?)', [$userId, $name, hash('sha256', $token)]);
+                    } elseif (input($_POST, 'token_id') === 'legacy') {
+                        query($pdo, 'UPDATE users SET api_token_hash = NULL WHERE id = ?', [$userId]);
+                    } else {
+                        $tokenId = id_value($_POST, 'token_id');
+                        if (!$tokenId) { throw new FormError(t('Choose a valid action.')); }
+                        query($pdo, 'DELETE FROM api_tokens WHERE id = ? AND user_id = ?', [$tokenId, $userId]);
+                    }
                     unset($_SESSION['new_api_token']);
                     if ($token) {
                         $_SESSION['new_api_token'] = $token;
@@ -200,7 +212,7 @@ try {
         'delete-fill' => delete_form($record),
         'cars', 'stations' => directory_page($page, $page === 'cars' ? $cars : $stations, $units),
         'car', 'station' => directory_form($page, $record, $units),
-        'settings' => settings_page($user, $cars, $stations),
+        'settings' => settings_page($user, $cars, $stations, query($pdo, 'SELECT id, name, created_at FROM api_tokens WHERE user_id = ? ORDER BY created_at DESC, id DESC', [$userId])->fetchAll()),
         'prices' => price_page($allRows, $user),
     };
     layout_end();
