@@ -66,4 +66,4 @@ If consumption looks wrong, check the date, odometer, purchased amount and tank 
 
 ## Connect other tools
 
-Create an API token in Preferences when a tool needs to read your statistics. Copy it when displayed and keep it private. Replacing or revoking it disconnects tools using that token. The configured Grafana integration uses a separate service credential.
+Create an API token in Preferences when a tool needs to read your statistics. Copy it when displayed and keep it private. Name tokens for each device or integration. You can create several tokens; creating one does not disconnect existing devices. Revoking a token disconnects only tools using that token. The configured Grafana integration uses a separate service credential.

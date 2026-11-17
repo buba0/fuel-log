@@ -1,10 +1,14 @@
 // !$*UTF8*$!
 { archiveVersion = 1; classes = {}; objectVersion = 56; objects = {
+000000000000000000000020 = { isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = FuelLog/Assets.xcassets; sourceTree = "<group>"; };
+000000000000000000000021 = { isa = PBXBuildFile; fileRef = 000000000000000000000020; };
+000000000000000000000022 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (000000000000000000000021); runOnlyForDeploymentPostprocessing = 0; };
+
 000000000000000000000011 = { isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Base.xcconfig; sourceTree = "<group>"; };
 000000000000000000000001 = { isa = PBXProject; attributes = { LastUpgradeCheck = 1600; }; buildConfigurationList = 00000000000000000000000A; compatibilityVersion = "Xcode 14.0"; developmentRegion = en; knownRegions = (en, Base); mainGroup = 000000000000000000000002; productRefGroup = 000000000000000000000003; projectDirPath = ""; projectRoot = ""; targets = (000000000000000000000004); };
 000000000000000000000002 = { isa = PBXGroup; children = (000000000000000000000005, 000000000000000000000006, 000000000000000000000003); sourceTree = "<group>"; };
 000000000000000000000003 = { isa = PBXGroup; children = (000000000000000000000007); name = Products; sourceTree = "<group>"; };
-000000000000000000000004 = { isa = PBXNativeTarget; buildConfigurationList = 00000000000000000000000B; buildPhases = (000000000000000000000008, 000000000000000000000009); buildRules = (); dependencies = (); name = FuelLog; productName = FuelLog; productReference = 000000000000000000000007; productType = "com.apple.product-type.application"; };
+000000000000000000000004 = { isa = PBXNativeTarget; buildConfigurationList = 00000000000000000000000B; buildPhases = (000000000000000000000022,000000000000000000000008, 000000000000000000000009); buildRules = (); dependencies = (); name = FuelLog; productName = FuelLog; productReference = 000000000000000000000007; productType = "com.apple.product-type.application"; };
 000000000000000000000005 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FuelLog/FuelLogApp.swift; sourceTree = "<group>"; };
 000000000000000000000006 = { isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = FuelLog/Info.plist; sourceTree = "<group>"; };
 000000000000000000000007 = { isa = PBXFileReference; explicitFileType = wrapper.application; path = FuelLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -15,6 +19,6 @@
 00000000000000000000000C = { isa = PBXBuildFile; fileRef = 000000000000000000000005; };
 00000000000000000000000D = { isa = XCBuildConfiguration; baseConfigurationReference = 000000000000000000000011; name = Debug; buildSettings = { SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; CLANG_ENABLE_MODULES = YES; }; };
 00000000000000000000000E = { isa = XCBuildConfiguration; baseConfigurationReference = 000000000000000000000011; name = Release; buildSettings = { SDKROOT = iphoneos; IPHONEOS_DEPLOYMENT_TARGET = 17.0; SWIFT_VERSION = 5.0; CLANG_ENABLE_MODULES = YES; }; };
-00000000000000000000000F = { isa = XCBuildConfiguration; baseConfigurationReference = 000000000000000000000011; name = Debug; buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.example.fuellog; INFOPLIST_FILE = "$(FUEL_LOG_INFO_PLIST)"; CODE_SIGN_STYLE = Automatic; TARGETED_DEVICE_FAMILY = "1,2"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; };
-000000000000000000000010 = { isa = XCBuildConfiguration; baseConfigurationReference = 000000000000000000000011; name = Release; buildSettings = { PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.example.fuellog; INFOPLIST_FILE = "$(FUEL_LOG_INFO_PLIST)"; CODE_SIGN_STYLE = Automatic; TARGETED_DEVICE_FAMILY = "1,2"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_OPTIMIZATION_LEVEL = "-O"; }; };
+00000000000000000000000F = { isa = XCBuildConfiguration; baseConfigurationReference = 000000000000000000000011; name = Debug; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.example.fuellog; INFOPLIST_FILE = "$(FUEL_LOG_INFO_PLIST)"; CODE_SIGN_STYLE = Automatic; TARGETED_DEVICE_FAMILY = "1,2"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_OPTIMIZATION_LEVEL = "-Onone"; }; };
+000000000000000000000010 = { isa = XCBuildConfiguration; baseConfigurationReference = 000000000000000000000011; name = Release; buildSettings = { ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; PRODUCT_NAME = "$(TARGET_NAME)"; PRODUCT_BUNDLE_IDENTIFIER = com.example.fuellog; INFOPLIST_FILE = "$(FUEL_LOG_INFO_PLIST)"; CODE_SIGN_STYLE = Automatic; TARGETED_DEVICE_FAMILY = "1,2"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SWIFT_OPTIMIZATION_LEVEL = "-O"; }; };
 }; rootObject = 000000000000000000000001; }
