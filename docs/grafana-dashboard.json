@@ -1,6 +1,6 @@
 {
   "uid": "fuel-log",
-  "title": "Fuel Log · MONITORED_USERNAME",
+  "title": "Fuel Log",
   "tags": [
     "fuel-log",
     "vehicles"
@@ -756,7 +756,7 @@
       },
       "options": {
         "mode": "markdown",
-        "content": "**MONITORED_USERNAME · Fuel Log**  \nLifetime values and recorded monthly totals refresh every 30 seconds. Blank economy requires a second usable fill-up. Tank estimates affect consumption. Grafana’s time picker controls monitoring samples; Fuel Log provides filters by fill-up date. [Open Fuel Log](http://192.0.2.10/)"
+        "content": "**Fuel Log**  \nLifetime values and recorded monthly totals refresh every 30 seconds. Blank economy requires a second usable fill-up. Tank estimates affect consumption. Grafana’s time picker controls monitoring samples; Fuel Log provides filters by fill-up date. [Open Fuel Log](https://fuel.example.com/)"
       },
       "description": ""
     },
