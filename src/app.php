@@ -219,6 +219,12 @@ function save_station(PDO $pdo, int $userId, array|false $record): never
 
 function save_fill(PDO $pdo, int $userId, array $units, array|false $record): never
 {
+    persist_fill($pdo, $userId, $units, $record);
+    go('history', notice: 'Fill-up saved.');
+}
+
+function persist_fill(PDO $pdo, int $userId, array $units, array|false $record): int
+{
     $car = my_record($pdo, 'car', $userId, id_value($_POST, 'car_id'));
     $station = my_record($pdo, 'station', $userId, id_value($_POST, 'station_id'));
     $date = input($_POST, 'filled_at');
@@ -265,7 +271,7 @@ function save_fill(PDO $pdo, int $userId, array $units, array|false $record): ne
         $pdo->rollBack();
         throw $exception;
     }
-    go('history', notice: 'Fill-up saved.');
+    return (int) $savedId;
 }
 
 function save_settings(PDO $pdo, int $userId): never

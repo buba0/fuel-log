@@ -13,6 +13,36 @@ function api_response(PDO $pdo): never
         echo json_encode(['error' => 'A valid API token is required.']);
         exit;
     }
+    $method = $_SERVER['REQUEST_METHOD'];
+    $resource = input($_GET, 'resource');
+    if ($method === 'POST') {
+        if (!$user['api_token_hash'] || !hash_equals($user['api_token_hash'], $hash)) {
+            api_json(['error' => 'A personal API token is required to create fill-ups.'], 403);
+        }
+        if ($resource !== 'fillups') { api_json(['error' => 'Unknown write resource.'], 404); }
+        if (strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0])) !== 'application/json') {
+            api_json(['error' => 'Use application/json.'], 415);
+        }
+        try {
+            $body = json_decode(file_get_contents('php://input'), true, 16, JSON_THROW_ON_ERROR);
+            if (!is_array($body) || array_is_list($body)) { api_json(['error' => 'Expected a JSON object.'], 400); }
+            $_POST = [];
+            foreach ($body as $key => $value) { if (is_string($value) || is_int($value) || is_float($value)) { $_POST[$key] = (string) $value; } }
+            $id = persist_fill($pdo, (int) $user['id'], ['distance'=>'km','volume'=>'l','price'=>'l','economy'=>'l_100km'], false);
+            api_json(['id' => $id], 201);
+        } catch (JsonException $exception) { api_json(['error' => 'Invalid JSON.'], 400); }
+        catch (FormError $exception) { api_json(['error' => $exception->getMessage()], 422); }
+    }
+    if ($method !== 'GET') { header('Allow: GET, POST'); api_json(['error' => 'Method not allowed.'], 405); }
+    if ($resource === 'fill-form') {
+        $last = query($pdo, 'SELECT car_id, station_id, price_per_liter FROM fillups WHERE user_id = ? ORDER BY filled_at DESC, odometer_km DESC, id DESC LIMIT 1', [$user['id']])->fetch() ?: [];
+        api_json([
+            'cars' => query($pdo, 'SELECT id, name, tank_capacity_liters, fuel_metering FROM cars WHERE user_id = ? ORDER BY name', [$user['id']])->fetchAll(),
+            'stations' => query($pdo, 'SELECT id, name, location FROM stations WHERE user_id = ? ORDER BY name', [$user['id']])->fetchAll(),
+            'defaults' => ['car_id' => $user['default_car_id'] ?: ($last['car_id'] ?? null), 'station_id' => $user['default_station_id'] ?: ($last['station_id'] ?? null), 'price' => $last['price_per_liter'] ?? null],
+            'currency' => $user['currency'],
+        ]);
+    }
     $from = input($_GET, 'from');
     $to = input($_GET, 'to');
     if (($from && !valid_date($from)) || ($to && !valid_date($to)) || ($from && $to && $from > $to)) {
@@ -109,4 +139,12 @@ function emit_metric(string $name, array $labels, mixed $value): void
         $parts[] = $key . '="' . $escaped . '"';
     }
     echo $name . '{' . implode(',', $parts) . '} ' . sprintf('%.10g', (float) $value) . "\n";
+}
+
+function api_json(array $data, int $status = 200): never
+{
+    http_response_code($status);
+    header('Content-Type: application/json');
+    echo json_encode($data, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+    exit;
 }

@@ -97,6 +97,7 @@ struct NativeApp: View {
     @State private var chartDate: Date?
     @State private var search = ""
     @State private var newest = true
+    @State private var adding = false
     func value(_ number: Double?, unit: String = "") -> String {
         guard let number else { return "—" }
         return number.formatted(.number.precision(.fractionLength(0...2))) + (unit.isEmpty ? "" : " " + unit)
@@ -146,7 +147,7 @@ struct NativeApp: View {
                                 metric("Best economy", value(economy(store.stat("best_consumption")), unit: economyUnit))
                                 metric("Worst economy", value(economy(store.stat("worst_consumption")), unit: economyUnit))
                             }
-                        }.navigationTitle("Dashboard").refreshable { await store.refresh(address) }.toolbar { refreshButton }
+                        }.navigationTitle("Dashboard").refreshable { await store.refresh(address) }.toolbar { addButton; refreshButton }
                     }.tabItem { Label("Dashboard", systemImage: "chart.bar.fill") }
                     NavigationStack {
                         List {
@@ -161,13 +162,13 @@ struct NativeApp: View {
                                 }.foregroundStyle(.primary)
                             } }
                         }.navigationTitle("Fill-ups").searchable(text: $search, prompt: "Vehicle or station").refreshable { await store.refresh(address) }
-                        .toolbar { Button { newest.toggle() } label: { Image(systemName: "arrow.up.arrow.down") }.accessibilityLabel("Reverse date order"); refreshButton }
+                        .toolbar { addButton; Button { newest.toggle() } label: { Image(systemName: "arrow.up.arrow.down") }.accessibilityLabel("Reverse date order"); refreshButton }
                     }.tabItem { Label("Fill-ups", systemImage: "list.bullet") }
                     NavigationStack {
                         List {
                             Section("Account") { LabeledContent("Username", value: store.user); Text(address).font(.footnote).textSelection(.enabled); Button("Connection settings") { settings = true } }
                             Section("Display") { Toggle("US imperial units", isOn: $imperial) }
-                            Section { Text("This native version reads server data. Adding or editing records is not yet available in the iOS app.").foregroundStyle(.secondary) }
+                            Section { Text("Add fill-ups with the + button. Editing existing records is available on the web.").foregroundStyle(.secondary) }
                             Button("Disconnect", role: .destructive) { Vault.remove(address); address = ""; store.clear() }
                         }.navigationTitle("Settings")
                     }.tabItem { Label("Settings", systemImage: "gearshape") }
@@ -175,6 +176,7 @@ struct NativeApp: View {
             }
         }.tint(.orange)
         .sheet(isPresented: $settings, onDismiss: { store.clear(); Task { await store.refresh(address) } }) { ConnectionSettings(address: $address) }
+        .sheet(isPresented: $adding) { AddFill(address: address, imperial: imperial) { Task { await store.refresh(address) } } }
         .sheet(item: $selected) { fill in
             NavigationStack {
                 List {
@@ -206,6 +208,7 @@ struct NativeApp: View {
         if store.loading { ProgressView("Updating…") }
         if let error = store.error { Section { Text(error).foregroundStyle(.red); Text("Previously loaded values may be outdated.").font(.caption); Button("Retry") { Task { await store.refresh(address) } } } }
     }
+    var addButton: some View { Button { adding = true } label: { Image(systemName: "plus") }.accessibilityLabel("Add fill-up") }
     var refreshButton: some View { Button { Task { await store.refresh(address) } } label: { Image(systemName: "arrow.clockwise") }.disabled(store.loading).accessibilityLabel("Refresh") }
     func metric(_ label: String, _ text: String) -> some View { LabeledContent(label) { Text(text).monospacedDigit().foregroundStyle(.primary) } }
 }
@@ -244,5 +247,118 @@ struct ConnectionSettings: View {
         let credential = token.trimmingCharacters(in: .whitespacesAndNewlines)
         guard credential.range(of: "^[a-f0-9]{64}$", options: .regularExpression) != nil else { error = "Enter the 64-character personal API token."; return }
         do { try Vault.save(credential, account: raw); address = raw; dismiss() } catch { self.error = error.localizedDescription }
+    }
+}
+
+struct AddFill: View {
+    let address: String
+    let imperial: Bool
+    let onSaved: () -> Void
+    @Environment(\.dismiss) private var dismiss
+    @State private var cars: [Fill] = []
+    @State private var stations: [Fill] = []
+    @State private var car = ""
+    @State private var station = ""
+    @State private var date = Date()
+    @State private var amount = ""
+    @State private var price = ""
+    @State private var odometer = ""
+    @State private var tank = 0.0
+    @State private var reported = ""
+    @State private var currency = ""
+    @State private var loading = true
+    @State private var saving = false
+    @State private var error: String?
+    private var selectedCar: Fill? { cars.first { $0.id == car } }
+    private var volumeFactor: Double { imperial ? 3.785411784 : 1 }
+    private var volumeUnit: String { imperial ? "US gal" : "L" }
+    private func numeric(_ text: String) -> Double? { Double(text.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: ",", with: ".")) }
+    private var valid: Bool {
+        guard !car.isEmpty, !station.isEmpty, let a = numeric(amount), let p = numeric(price), let o = numeric(odometer) else { return false }
+        return a.isFinite && p.isFinite && o.isFinite && a > 0 && p >= 0 && o >= 0
+    }
+    var body: some View {
+        NavigationStack {
+            Form {
+                if loading { ProgressView("Loading vehicles and stations…") }
+                if let error { Section { Text(error).foregroundStyle(.red) } }
+                if !loading && (cars.isEmpty || stations.isEmpty) {
+                    Section { Text("Add a vehicle and a fuel station in the web app first, then reopen this form.") }
+                }
+                Section("Visit") {
+                    Picker("Vehicle", selection: $car) { Text("Choose vehicle").tag(""); ForEach(cars) { Text($0.text("name")).tag($0.id) } }
+                    Picker("Station", selection: $station) { Text("Choose station").tag(""); ForEach(stations) { Text($0.text("name") + " " + $0.text("location")).tag($0.id) } }
+                    DatePicker("Date", selection: $date, displayedComponents: .date)
+                }
+                Section("Fuel and cost") {
+                    TextField("Fuel added (\(volumeUnit))", text: $amount).keyboardType(.decimalPad)
+                    TextField("Price per \(volumeUnit) (\(currency))", text: $price).keyboardType(.decimalPad)
+                    if let a = numeric(amount), let p = numeric(price), (a * p).isFinite {
+                        LabeledContent("Total paid", value: (a * p).formatted(.number.precision(.fractionLength(2))) + " " + currency)
+                    }
+                    Text("Enter zero price for gifted fuel. Fuel economy is calculated from consecutive fill-ups.").font(.footnote).foregroundStyle(.secondary)
+                }
+                Section("Odometer and tank") {
+                    TextField("Odometer (\(imperial ? "mi" : "km"))", text: $odometer).keyboardType(.decimalPad)
+                    LabeledContent("Fuel before filling", value: "\(Int(tank))%")
+                    Slider(value: $tank, in: 0...100, step: 1).accessibilityLabel("Tank level before filling")
+                    if let capacity = selectedCar?.number("tank_capacity_liters") {
+                        Text(((capacity * tank / 100) / volumeFactor).formatted(.number.precision(.fractionLength(2))) + " " + volumeUnit + " remaining before filling").font(.footnote)
+                    }
+                    if selectedCar?.number("fuel_metering") == 1 {
+                        TextField("Vehicle-reported economy (optional, \(imperial ? "mpg US" : "L/100 km"))", text: $reported).keyboardType(.decimalPad)
+                    }
+                }
+            }.disabled(saving).navigationTitle("New fill-up").navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() }.disabled(saving) }
+                ToolbarItem(placement: .confirmationAction) { Button(saving ? "Saving…" : "Save") { Task { await save() } }.disabled(!valid || saving || loading) }
+            }.interactiveDismissDisabled(saving)
+            .task { await load() }
+            .onChange(of: car) { _, _ in reported = "" }
+        }
+    }
+    private func request(_ resource: String, body: [String: String]? = nil) async throws -> [String: Any] {
+        guard var parts = URLComponents(string: address) else { throw AppError.message("Invalid server address.") }
+        parts.queryItems = [URLQueryItem(name: "page", value: "api"), URLQueryItem(name: "resource", value: resource)]
+        guard let url = parts.url else { throw AppError.message("Invalid server address.") }
+        var request = URLRequest(url: url); request.timeoutInterval = 20
+        request.setValue("Bearer " + Vault.read(address), forHTTPHeaderField: "Authorization")
+        if let body { request.httpMethod = "POST"; request.httpBody = try JSONSerialization.data(withJSONObject: body); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+        let session = URLSession(configuration: .ephemeral, delegate: NoRedirects(), delegateQueue: nil)
+        defer { session.finishTasksAndInvalidate() }
+        let (data, response) = try await session.data(for: request)
+        let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200...299).contains(status) else { throw AppError.message(object["error"] as? String ?? "Server returned HTTP \(status).") }
+        return object
+    }
+    private func load() async {
+        defer { loading = false }
+        do {
+            let data = try await request("fill-form")
+            guard let vehicles = data["cars"] as? [[String: Any]], let locations = data["stations"] as? [[String: Any]] else { throw AppError.message("Update the server to support native fill-up entry.") }
+            cars = vehicles.map { Fill(fields: $0) }; stations = locations.map { Fill(fields: $0) }; currency = data["currency"] as? String ?? ""
+            let defaults = Fill(fields: data["defaults"] as? [String: Any] ?? [:])
+            car = cars.contains { $0.id == defaults.text("car_id") } ? defaults.text("car_id") : cars.first?.id ?? ""
+            station = stations.contains { $0.id == defaults.text("station_id") } ? defaults.text("station_id") : stations.first?.id ?? ""
+            if let p = defaults.number("price") { price = String(p * volumeFactor) }
+        } catch { self.error = error.localizedDescription }
+    }
+    private func save() async {
+        guard valid, let a = numeric(amount), let p = numeric(price), let o = numeric(odometer) else { return }
+        saving = true; error = nil
+        defer { saving = false }
+        let formatter = DateFormatter(); formatter.locale = Locale(identifier: "en_US_POSIX"); formatter.dateFormat = "yyyy-MM-dd"
+        var data = ["car_id": car, "station_id": station, "filled_at": formatter.string(from: date), "volume": String(a * volumeFactor), "price": String(p / volumeFactor), "odometer": String(o * (imperial ? 1.609344 : 1)), "tank_level": String(tank)]
+        if selectedCar?.number("fuel_metering") == 1 && !reported.isEmpty {
+            guard let n = numeric(reported), n.isFinite, n > 0 else { error = "Enter a positive vehicle-reported economy or leave it empty."; return }
+            data["reported_consumption"] = String(imperial ? 235.214583 / n : n)
+        }
+        do {
+            let result = try await request("fillups", body: data)
+            guard result["id"] != nil else { throw AppError.message("No save confirmation received. Check history before retrying.") }
+            onSaved(); dismiss()
+        } catch { self.error = error.localizedDescription + " If the connection failed during saving, check history before retrying to avoid a duplicate." }
     }
 }
