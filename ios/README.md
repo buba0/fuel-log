@@ -21,7 +21,7 @@ The phone needs network access to the server. HTTPS is supported; HTTP is allowe
 - Metric and US imperial display units, automatic light/dark appearance and Dynamic Type.
 - Pull to refresh, request progress, error messages and retry.
 
-Use the + button on Dashboard or Fill-ups to create records with native controls. The form carries over defaults, converts display units, calculates cost, and accepts the starting tank level and optional vehicle-reported economy. Vehicles and stations must already exist. This version does not yet edit/delete records, manage vehicles or stations, review alerts, export files, offer custom units. The existing web app retains those features. Data stays in memory; offline editing and persistent offline storage are not provided.
+Use the + button on Dashboard or Fill-ups to create records with native controls. The form carries over defaults, converts display units, calculates cost, and accepts the starting tank level and optional vehicle-reported economy. Vehicles and stations must already exist. Tap a fill-up, choose **Delete fill-up**, and confirm to permanently remove it and refresh statistics. This version does not yet edit records, manage vehicles or stations, review alerts, export files, offer custom units. The existing web app retains those features. Data stays in memory; offline editing and persistent offline storage are not provided.
 
 The API token is scoped to the user's existing account. The server must include the native fill-up entry API; deploy the matching release before adding records.
 

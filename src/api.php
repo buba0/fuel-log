@@ -17,11 +17,18 @@ function api_response(PDO $pdo): never
     }
     $method = $_SERVER['REQUEST_METHOD'];
     $resource = input($_GET, 'resource');
-    if ($method === 'POST') {
+    if (in_array($method, ['POST', 'DELETE'], true)) {
         if (!$personal && (!$user['api_token_hash'] || !hash_equals($user['api_token_hash'], $hash))) {
-            api_json(['error' => 'A personal API token is required to create fill-ups.'], 403);
+            api_json(['error' => 'A personal API token is required to modify fill-ups.'], 403);
         }
         if ($resource !== 'fillups') { api_json(['error' => 'Unknown write resource.'], 404); }
+        if ($method === 'DELETE') {
+            $id = filter_var($_GET['id'] ?? '', FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+            if (!$id) { api_json(['error' => 'A valid fill-up ID is required.'], 400); }
+            $deleted = query($pdo, 'DELETE FROM fillups WHERE id = ? AND user_id = ?', [$id, $user['id']]);
+            if (!$deleted->rowCount()) { api_json(['error' => 'Fill-up not found.'], 404); }
+            api_json(['deleted' => $id]);
+        }
         if (strtolower(trim(explode(';', $_SERVER['CONTENT_TYPE'] ?? '')[0])) !== 'application/json') {
             api_json(['error' => 'Use application/json.'], 415);
         }
@@ -35,7 +42,7 @@ function api_response(PDO $pdo): never
         } catch (JsonException $exception) { api_json(['error' => 'Invalid JSON.'], 400); }
         catch (FormError $exception) { api_json(['error' => $exception->getMessage()], 422); }
     }
-    if ($method !== 'GET') { header('Allow: GET, POST'); api_json(['error' => 'Method not allowed.'], 405); }
+    if ($method !== 'GET') { header('Allow: GET, POST, DELETE'); api_json(['error' => 'Method not allowed.'], 405); }
     if ($resource === 'fill-form') {
         $last = query($pdo, 'SELECT car_id, station_id, price_per_liter FROM fillups WHERE user_id = ? ORDER BY filled_at DESC, odometer_km DESC, id DESC LIMIT 1', [$user['id']])->fetch() ?: [];
         api_json([

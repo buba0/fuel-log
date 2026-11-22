@@ -2,7 +2,7 @@
 
 ## Create or revoke access
 
-In **Preferences → API access**, choose **Create API token** and copy the token when it is shown. Personal tokens grant read access and permission to create fill-ups in the account. Grafana service tokens remain read-only. Fuel Log stores its SHA-256 hash. Give each token a name, such as a device or integration. Creating another token leaves existing tokens active. Revoke tokens individually using the button next to their name. Legacy tokens remain valid and appear as Existing API token.
+In **Preferences → API access**, choose **Create API token** and copy the token when it is shown. Personal tokens grant read access and permission to create and delete fill-ups in the account. Grafana service tokens remain read-only. Fuel Log stores its SHA-256 hash. Give each token a name, such as a device or integration. Creating another token leaves existing tokens active. Revoke tokens individually using the button next to their name. Legacy tokens remain valid and appear as Existing API token.
 
 Send the token in the `Authorization: Bearer` header. Keep it in a protected secret store or file. A deployment administrator can configure a separate Grafana service token so revoking or replacing a personal token leaves the monitoring connection intact.
 
@@ -112,3 +112,7 @@ The example dashboard uses `MONITORED_USERNAME` as a placeholder. Replace it wit
 `GET /?page=api&resource=fill-form` returns owned cars (including capacity/metering), stations, currency and defaults (preferred or latest vehicle/station and latest price).
 
 `POST /?page=api&resource=fillups` accepts a personal bearer token and `Content-Type: application/json`. Send `car_id`, `station_id`, `filled_at` (YYYY-MM-DD), `volume` (litres), `price` (currency/litre), `odometer` (km), and `tank_level` (percent before filling, defaults to zero). Optional `reported_consumption` uses L/100 km for supported vehicles. The server calculates total paid and tank volume and checks ownership and odometer chronology. Success returns HTTP 201 with `id`; validation errors return 422, invalid JSON 400, wrong content type 415, and service-token writes 403. Requests are not automatically retried; after an uncertain network failure check history before resubmitting.
+
+### Delete a fill-up
+
+`DELETE /index.php?page=api&resource=fillups&id=123` requires a personal bearer token. No request body is needed. Only records belonging to that account can be deleted. Success returns HTTP 200 with `{"deleted":123}`. Invalid IDs return 400; missing or other-account records return 404; service tokens return 403. Deletion is permanent. Subsequent statistics are calculated from the remaining records.
