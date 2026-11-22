@@ -87,6 +87,7 @@ final class Store: ObservableObject {
     }
     func deleteFill(_ fill: Fill, address: String) async throws {
         guard var parts = URLComponents(string: address) else { throw AppError.message(L("Invalid server address.")) }
+        if !parts.path.hasSuffix(".php") { parts.path = parts.path.trimmingCharacters(in: CharacterSet(charactersIn: "/")); parts.path = "/" + (parts.path.isEmpty ? "" : parts.path + "/") + "index.php" }
         parts.queryItems = [URLQueryItem(name: "page", value: "api"), URLQueryItem(name: "resource", value: "fillups"), URLQueryItem(name: "id", value: fill.id)]
         guard let url = parts.url else { throw AppError.message(L("Invalid server address.")) }
         var request = URLRequest(url: url); request.httpMethod = "DELETE"; request.timeoutInterval = 20

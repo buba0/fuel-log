@@ -115,4 +115,4 @@ The example dashboard uses `MONITORED_USERNAME` as a placeholder. Replace it wit
 
 ### Delete a fill-up
 
-`DELETE /?page=api&resource=fillups&id=123` requires a personal bearer token. No request body is needed. Only records belonging to that account can be deleted. Success returns HTTP 200 with `{"deleted":123}`. Invalid IDs return 400; missing or other-account records return 404; service tokens return 403. Deletion is permanent. Subsequent statistics are calculated from the remaining records.
+`DELETE /index.php?page=api&resource=fillups&id=123` requires a personal bearer token. No request body is needed. Only records belonging to that account can be deleted. Success returns HTTP 200 with `{"deleted":123}`. Invalid IDs return 400; missing or other-account records return 404; service tokens return 403. Deletion is permanent. Subsequent statistics are calculated from the remaining records.
