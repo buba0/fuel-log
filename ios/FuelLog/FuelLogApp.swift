@@ -85,6 +85,21 @@ final class Store: ObservableObject {
             stats = summary; currency = object["currency"] as? String ?? ""; user = object["user"] as? String ?? ""
         } catch { if generation == requestID { self.error = error.localizedDescription } }
     }
+    func deleteFill(_ fill: Fill, address: String) async throws {
+        guard var parts = URLComponents(string: address) else { throw AppError.message(L("Invalid server address.")) }
+        parts.queryItems = [URLQueryItem(name: "page", value: "api"), URLQueryItem(name: "resource", value: "fillups"), URLQueryItem(name: "id", value: fill.id)]
+        guard let url = parts.url else { throw AppError.message(L("Invalid server address.")) }
+        var request = URLRequest(url: url); request.httpMethod = "DELETE"; request.timeoutInterval = 20
+        request.setValue("Bearer " + Vault.read(address), forHTTPHeaderField: "Authorization")
+        let (data, response) = try await session.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let object = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
+        guard status == 200, let deleted = object?["deleted"] as? NSNumber, deleted.stringValue == fill.id else {
+            throw AppError.message(L(object?["error"] as? String ?? "Could not delete the fill-up. Refresh history and try again."))
+        }
+        clear()
+        await refresh(address)
+    }
     func stat(_ key: String) -> Double? { (stats[key] as? NSNumber)?.doubleValue }
 }
 
@@ -94,6 +109,9 @@ struct NativeApp: View {
     @AppStorage("appLanguage") private var appLanguage = "system"
     @StateObject private var store = Store()
     @State private var settings = false
+    @State private var confirmingDelete = false
+    @State private var deleting = false
+    @State private var deleteError: String?
     @State private var selected: Fill?
     @State private var chartDate: Date?
     @State private var search = ""
@@ -191,9 +209,29 @@ struct NativeApp: View {
                         metric(L("Days since previous"), value(fill.number("calculated_interval_days")))
                         metric(L("Fuel before filling"), value(volume(fill.number("tank_before_liters")), unit: volumeUnit))
                     }
+                    Section {
+                        Button(role: .destructive) { confirmingDelete = true } label: {
+                            Label(L(deleting ? "Deleting…" : "Delete fill-up"), systemImage: "trash")
+                        }
+                        if let deleteError { Text(deleteError).foregroundStyle(.red) }
+                    }
                     Button(L("Filter dashboard to this vehicle")) { store.vehicle = fill.text("car_id"); selected = nil }
                 }.navigationTitle(L("Fill-up details")).navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button(L("Done")) { selected = nil } }
+                .disabled(deleting)
+                .toolbar { Button(L("Done")) { selected = nil }.disabled(deleting) }
+                .interactiveDismissDisabled(deleting)
+                .onAppear { deleteError = nil }
+                .confirmationDialog(L("Delete this fill-up?"), isPresented: $confirmingDelete, titleVisibility: .visible) {
+                    Button(L("Delete fill-up"), role: .destructive) {
+                        deleting = true; deleteError = nil
+                        Task {
+                            defer { deleting = false }
+                            do { try await store.deleteFill(fill, address: address); selected = nil }
+                            catch { deleteError = L(error.localizedDescription) }
+                        }
+                    }
+                    Button(L("Cancel"), role: .cancel) { }
+                } message: { Text(L("This permanently deletes the fill-up and recalculates your statistics. This cannot be undone.")) }
             }
         }
         .task(id: address + "|\(store.days)|" + store.vehicle) { await store.refresh(address) }
@@ -413,6 +451,14 @@ func L(_ text: String) -> String {
         "Fuel before filling": "Paliwo przed tankowaniem",
         "Filter dashboard to this vehicle": "Filtruj podsumowanie według tego pojazdu",
         "Fill-up details": "Szczegóły tankowania",
+        "Delete fill-up": "Usuń tankowanie",
+        "Deleting…": "Usuwanie…",
+        "Delete this fill-up?": "Usunąć to tankowanie?",
+        "This permanently deletes the fill-up and recalculates your statistics. This cannot be undone.": "Tankowanie zostanie trwale usunięte, a statystyki przeliczone. Tej operacji nie można cofnąć.",
+        "Could not delete the fill-up. Refresh history and try again.": "Nie udało się usunąć tankowania. Odśwież historię i spróbuj ponownie.",
+        "Fill-up not found.": "Nie znaleziono tankowania.",
+        "A personal API token is required to modify fill-ups.": "Do zmieniania tankowań wymagany jest osobisty token API.",
+        "A valid API token is required.": "Wymagany jest prawidłowy token API.",
         "Done": "Gotowe",
         "Updating…": "Aktualizowanie…",
         "Previously loaded values may be outdated.": "Wcześniej pobrane dane mogą być nieaktualne.",
